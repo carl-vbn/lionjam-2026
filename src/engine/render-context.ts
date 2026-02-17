@@ -207,6 +207,13 @@ export class RenderContext {
     this.ctx.strokeRect(x, y, width, height);
   }
 
+  fillEllipse(x: number, y: number, radiusX: number, radiusY: number, color: string): void {
+    this.ctx.fillStyle = color;
+    this.ctx.beginPath();
+    this.ctx.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
+    this.ctx.fill();
+  }
+
   drawText(
     text: string,
     x: number,

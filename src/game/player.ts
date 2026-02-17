@@ -29,6 +29,7 @@ export class Player extends Entity {
     this.footstepTimer = 0;
     this.input = input;
     this.generateSurroundings = generateSurroundings;
+    this.layer = 1;
   }
 
   draw(ctx: RenderContext): void {
