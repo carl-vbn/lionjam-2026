@@ -30,18 +30,18 @@ export class Player extends Entity {
     this.input = input;
     this.generateSurroundings = generateSurroundings;
     this.layer = 1;
+    this.dynamic = true;
   }
 
   draw(ctx: RenderContext): void {
-    // Draw shadow
+    // Draw shadow (at feet)
     ctx.ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
     ctx.ctx.beginPath();
-    ctx.ctx.ellipse(this.position.x, this.position.y + 0.3, 0.4, 0.15, 0, 0, Math.PI * 2);
+    ctx.ctx.ellipse(this.position.x, this.position.y - 0.075, 0.4, 0.15, 0, 0, Math.PI * 2);
     ctx.ctx.fill();
 
     // Draw footsteps
     this.footsteps.forEach((footstep) => {
-      const alpha = Math.max(0, footstep.lifetime / 0.5); // Fade out over 0.5 seconds
       ctx.ctx.fillStyle = `rgba(255, 255, 255)`;
       const size = footstep.scale * 0.1;
       ctx.ctx.fillRect(
@@ -52,17 +52,17 @@ export class Player extends Entity {
       );
     });
 
-    // Draw player
+    // Draw player (sprite extends upward from bottom-center pivot)
     const img = this.velocity.x > 0.1 ? playerImgs.right : this.velocity.x < -0.1 ? playerImgs.left : playerImgs.base;
-    ctx.drawImage(img, this.position.x - 0.75 / 2, this.position.y - 0.75 / 2, 0.75, 0.75);
+    ctx.drawImage(img, this.position.x - 0.75 / 2, this.position.y - 0.75, 0.75, 0.75);
 
     // Draw eyes
-    let eyeBaseOffsets = [new Vec2(-0.21, 0.04), new Vec2(0.03, 0.015)];
+    let eyeBaseOffsets = [new Vec2(-0.21, -0.335), new Vec2(0.03, -0.36)];
 
     if (this.velocity.x > 0.1) {
-      eyeBaseOffsets = [new Vec2(0.02, -0.01)];
+      eyeBaseOffsets = [new Vec2(0.02, -0.385)];
     } else if (this.velocity.x < -0.1) {
-      eyeBaseOffsets = [new Vec2(-0.28, -0.01)];
+      eyeBaseOffsets = [new Vec2(-0.28, -0.385)];
     }
 
     const { worldPos: mousePos } = this.input.getMousePos();
@@ -102,7 +102,7 @@ export class Player extends Entity {
           (Math.random() - 0.5) * 0.3
         );
         this.footsteps.push({
-          position: this.position.add(new Vec2(0, 0.2)).add(randomOffset),
+          position: this.position.add(new Vec2(0, -0.175)).add(randomOffset),
           lifetime: 0.5,
           scale: 0.3,
         });

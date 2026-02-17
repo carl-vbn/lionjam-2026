@@ -3,6 +3,7 @@ import { Vec2 } from "../engine/vec2.js";
 import { World } from "../engine/world.js";
 import { Stick } from "./drops.js";
 import { GrassTile, NaturalTile, SandTile, StoneTile, WaterTile } from "./tiles.js";
+import { PalmTree } from "./trees.js";
 
 export function generateTile(world: World, x: number, y: number): NaturalTile | null {
     let dryness = noise.perlin2(x * 0.1, y * 0.1) / 2 + 0.5;
@@ -15,8 +16,9 @@ export function generateTile(world: World, x: number, y: number): NaturalTile | 
 
     // Entity spawning
     if (dryness < 0.3 && dryness > 0.2 && Math.random() < 0.01) {
-        // Spawn stick
         world.addEntity(new Stick(new Vec2(x + 0.5, y + 0.5)));
+    } else if (dryness > 0.3 && Math.random() < 0.05 * (-y / 100)) {
+        world.addEntity(new PalmTree(new Vec2(x + 0.5, y + 0.5)));
     }
 
     if (dryness < 0.2) {

@@ -2,13 +2,20 @@ import { Tile } from "./tile.js";
 import { Entity } from "./entity.js";
 import { RenderContext } from "./render-context.js";
 
+function compareEntities(a: Entity, b: Entity): number {
+  if (a.layer !== b.layer) return a.layer - b.layer;
+  return a.position.y - b.position.y;
+}
+
 /**
  * A 2D tile grid world.
  * Tiles are stored in a sparse map keyed by "x,y" for flexibility.
+ * Entities are kept in a sorted array (by layer, then y) for efficient draw-order.
  */
 export class World {
   private tiles: Map<string, Tile> = new Map();
-  private entities: Set<Entity> = new Set();
+  private entities: Entity[] = [];
+  private dynamicEntities: Set<Entity> = new Set();
 
   private static key(x: number, y: number): string {
     return `${x},${y}`;
@@ -47,12 +54,33 @@ export class World {
     }
   }
 
+  /** Binary-insert an entity into the sorted array. */
+  private insertEntitySorted(entity: Entity): void {
+    let lo = 0, hi = this.entities.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (compareEntities(this.entities[mid], entity) <= 0) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    this.entities.splice(lo, 0, entity);
+  }
+
   addEntity(entity: Entity): void {
-    this.entities.add(entity);
+    this.insertEntitySorted(entity);
+    if (entity.dynamic) {
+      this.dynamicEntities.add(entity);
+    }
   }
 
   removeEntity(entity: Entity): void {
-    this.entities.delete(entity);
+    const idx = this.entities.indexOf(entity);
+    if (idx !== -1) {
+      this.entities.splice(idx, 1);
+    }
+    this.dynamicEntities.delete(entity);
   }
 
   /** Iterate over all entities. */
@@ -62,7 +90,7 @@ export class World {
     }
   }
 
-  /** Update all tiles and entities. */
+  /** Update all tiles and entities, then re-sort dynamic entities. */
   update(dt: number): void {
     for (const tile of this.tiles.values()) {
       tile.update(dt);
@@ -70,50 +98,45 @@ export class World {
     for (const entity of this.entities) {
       entity.update(dt);
     }
+
+    // Re-sort only dynamic entities (e.g. the player) by removing and re-inserting
+    for (const entity of this.dynamicEntities) {
+      const idx = this.entities.indexOf(entity);
+      if (idx !== -1) {
+        this.entities.splice(idx, 1);
+        this.insertEntitySorted(entity);
+      }
+    }
   }
 
   /**
-   * Draw the world. Only tiles and entities within the camera's visible bounds
-   * are drawn. Everything is sorted by layer for correct z-ordering.
+   * Draw the world. Tiles are drawn first (all layer 0), then entities
+   * are drawn in their pre-sorted order (by layer, then y) for correct
+   * depth ordering without per-frame sorting.
    */
   draw(ctx: RenderContext): void {
     const bounds = ctx.getVisibleBounds();
 
-    // Collect visible drawables: tiles and entities together for unified layer sorting
-    const drawables: { layer: number; draw: () => void }[] = [];
-
+    // Draw visible tiles (all layer 0, order within layer doesn't matter)
     for (const tile of this.tiles.values()) {
       const tx = tile.position.x;
       const ty = tile.position.y;
       if (tx + 1 >= bounds.minX && tx <= bounds.maxX &&
           ty + 1 >= bounds.minY && ty <= bounds.maxY) {
-        drawables.push({
-          layer: tile.layer,
-          draw: () => {
-            ctx.pushTransform({ translation: tile.position });
-            tile.draw(ctx);
-            ctx.popTransform();
-          },
-        });
+        ctx.pushTransform({ translation: tile.position });
+        tile.draw(ctx);
+        ctx.popTransform();
       }
     }
 
+    // Draw visible entities in pre-sorted order (layer, then y)
     for (const entity of this.entities) {
-      const ex = entity.position.x;
-      const ey = entity.position.y;
+      const ex = entity.position.x - entity.size.x / 2;
+      const ey = entity.position.y - entity.size.y / 2;
       if (ex + entity.size.x >= bounds.minX && ex <= bounds.maxX &&
           ey + entity.size.y >= bounds.minY && ey <= bounds.maxY) {
-        drawables.push({
-          layer: entity.layer,
-          draw: () => entity.draw(ctx),
-        });
+        entity.draw(ctx);
       }
-    }
-
-    drawables.sort((a, b) => a.layer - b.layer);
-
-    for (const d of drawables) {
-      d.draw();
     }
   }
 }

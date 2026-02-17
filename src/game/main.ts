@@ -77,15 +77,18 @@ input.onMouse((e) => {
 
 // --- HUD text ---
 
-function drawHUD(): void {
-  // Reset to screen coordinates for HUD
+let fps = 0;
+
+function drawHUD(dt: number): void {
+  fps += (1 / dt - fps) * 0.05;
+
   const native = ctx.ctx;
   native.fillStyle = "rgba(0, 0, 0, 0.5)";
-  native.fillRect(8, 8, 280, 28);
+  native.fillRect(8, 8, 400, 28);
   native.font = "14px monospace";
   native.fillStyle = "#ffffff";
   native.fillText(
-    `Camera: (${camera.position.x.toFixed(1)}, ${camera.position.y.toFixed(1)})  Zoom: ${camera.zoom.toFixed(2)}`,
+    `Camera: (${camera.position.x.toFixed(1)}, ${camera.position.y.toFixed(1)})  Zoom: ${camera.zoom.toFixed(2)}  FPS: ${Math.round(fps)}`,
     16, 26,
   );
 }
@@ -100,7 +103,7 @@ const loop = createGameLoop((dt) => {
   world.draw(ctx);
   particles.draw(ctx);
   ctx.endFrame();
-  drawHUD();
+  drawHUD(dt);
 
   // Move camera to follow player
   const followSpeed = 2;

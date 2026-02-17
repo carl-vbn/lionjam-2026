@@ -12,6 +12,12 @@ export abstract class Entity {
   layer: number = 0;
 
   /**
+   * Whether this entity moves and needs its sort position updated each frame.
+   * Set to true for entities like the player that change position.
+   */
+  dynamic: boolean = false;
+
+  /**
    * Bounding size in tile units, used for visibility culling.
    * Defaults to 1x1. Override if the entity is larger.
    */
