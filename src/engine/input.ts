@@ -31,6 +31,10 @@ export class InputHandler {
   private keysDown: Set<string> = new Set();
   private world: World | null = null;
   private cleanupFns: (() => void)[] = [];
+  private lastMousePos: { screenPos: Vec2; worldPos: Vec2 } = {
+    screenPos: new Vec2(0, 0),
+    worldPos: new Vec2(0, 0),
+  };
 
   constructor(private renderCtx: RenderContext) {
     this.attach();
@@ -61,6 +65,11 @@ export class InputHandler {
     return this.keysDown.has(key);
   }
 
+  /** Get the current mouse position in both screen and world coordinates. */
+  getMousePos(): { screenPos: Vec2; worldPos: Vec2 } {
+    return this.lastMousePos;
+  }
+
   private attach(): void {
     const canvas = this.renderCtx.canvas;
 
@@ -71,6 +80,9 @@ export class InputHandler {
       const button = toMouseButton(e.button);
 
       const event: MouseEvent = { type, button, screenPos, worldPos };
+
+      // Update the last mouse position
+      this.lastMousePos = { screenPos, worldPos };
 
       // Tile click detection
       if (type === "click" && this.world) {

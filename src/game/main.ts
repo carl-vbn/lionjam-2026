@@ -1,105 +1,49 @@
 import {
   Vec2, Camera, createContext, World, Tile,
-  RenderContext, InputHandler, createGameLoop, ParticleSystem,
+  InputHandler, createGameLoop, ParticleSystem,
   Flipbook,
 } from "../engine/index.js";
-
-// --- Example tile types ---
-
-class GrassTile extends Tile {
-  draw(ctx: RenderContext): void {
-    ctx.fillRect(0, 0, 1, 1, "#4a7c3f");
-    // Simple grass lines
-    ctx.fillRect(0.2, 0.3, 0.05, 0.3, "#3a6c2f");
-    ctx.fillRect(0.5, 0.2, 0.05, 0.35, "#3a6c2f");
-    ctx.fillRect(0.75, 0.35, 0.05, 0.25, "#3a6c2f");
-  }
-
-  onClick(worldPos: Vec2): void {
-    console.log(`Grass clicked at world (${worldPos.x.toFixed(1)}, ${worldPos.y.toFixed(1)})`);
-  }
-}
-
-const waterFp = new Flipbook("assets/water.png", 3, 0.2);
-
-class WaterTile extends Tile {
-  private time = 0;
-
-  update(dt: number): void {
-    this.time += dt;
-  }
-
-  draw(ctx: RenderContext): void {
-    const shade = Math.sin(this.time * 2 + this.position.x * 0.5) * 10;
-    const r = 30 + shade;
-    const g = 100 + shade;
-    const b = 200 + shade;
-    ctx.drawFlipbook(waterFp, 0, 0, 1, 1);
-  }
-}
-
-class StoneTile extends Tile {
-  draw(ctx: RenderContext): void {
-    ctx.fillRect(0, 0, 1, 1, "#888888");
-    ctx.fillRect(0.1, 0.1, 0.35, 0.35, "#777777");
-    ctx.fillRect(0.55, 0.5, 0.35, 0.4, "#777777");
-    ctx.strokeRect(0, 0, 1, 1, "#666666", 0.03);
-  }
-
-  onClick(worldPos: Vec2): void {
-    console.log(`Stone clicked at world (${worldPos.x.toFixed(1)}, ${worldPos.y.toFixed(1)})`);
-  }
-}
+import { generateTile } from "./generator.js";
+import { Player } from "./player.js";
 
 // --- Setup ---
 
 const canvas = document.getElementById("game-canvas") as HTMLCanvasElement;
 const camera = new Camera(new Vec2(8, 8), 1);
-const ctx = createContext({ canvas, camera, tileSize: 48 });
+const ctx = createContext({ canvas, camera, tileSize: 128 });
 const world = new World();
 const particles = new ParticleSystem();
 const input = new InputHandler(ctx);
 input.setWorld(world);
 
-// Build a simple map
-for (let y = 0; y < 16; y++) {
-  for (let x = 0; x < 16; x++) {
-    // Water border
-    if (x === 0 || y === 0 || x === 15 || y === 15) {
-      world.setTile(x, y, new WaterTile(x, y));
-    }
-    // Stone path down the middle
-    else if (x === 7 || x === 8) {
-      world.setTile(x, y, new StoneTile(x, y));
-    }
-    // Grass everywhere else
-    else {
-      world.setTile(x, y, new GrassTile(x, y));
+function generateSurroundings(center: Vec2, radius: number): void {
+  const startX = Math.floor(center.x - radius);
+  const endX = Math.ceil(center.x + radius);
+  const startY = Math.floor(center.y - radius);
+  const endY = Math.ceil(center.y + radius);
+
+  for (let x = startX; x <= endX; x++) {
+    for (let y = startY; y <= endY; y++) {
+      if (!world.getTile(x, y)) {
+        const tile = generateTile(world, x, y);
+        if (tile) {
+          world.setTile(x, y, tile);
+        }
+      }
     }
   }
 }
 
+// --- Entities ---
+
+const player = new Player(new Vec2(8, 8), input, generateSurroundings);
+
+world.addEntity(player);
+
+// Generate initial surroundings around player
+generateSurroundings(player.position, 12);
+
 // --- Camera controls ---
-
-let dragging = false;
-let lastMouse = Vec2.zero();
-
-input.onMouse((e) => {
-  if (e.type === "down" && e.button === "left") {
-    dragging = true;
-    lastMouse = e.screenPos;
-  }
-  if (e.type === "up") {
-    dragging = false;
-  }
-  if (e.type === "move" && dragging) {
-    const scale = ctx.tileSize * camera.zoom;
-    const dx = (e.screenPos.x - lastMouse.x) / scale;
-    const dy = (e.screenPos.y - lastMouse.y) / scale;
-    camera.move(new Vec2(-dx, -dy));
-    lastMouse = e.screenPos;
-  }
-});
 
 canvas.addEventListener("wheel", (e) => {
   e.preventDefault();
@@ -157,6 +101,12 @@ const loop = createGameLoop((dt) => {
   particles.draw(ctx);
   ctx.endFrame();
   drawHUD();
+
+  // Move camera to follow player
+  const followSpeed = 2;
+  const delta = followSpeed * dt;
+  camera.position.x += (player.position.x - camera.position.x) * delta;
+  camera.position.y += (player.position.y - camera.position.y) * delta;
 });
 
 loop.start();

@@ -77,11 +77,15 @@ export class RenderContext {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.transformDepth = 0;
 
-    // Camera transform: center the camera position on screen, apply zoom and tile size
-    const scale = this._tileSize * this._camera.zoom;
-    this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
+    // Camera transform: center the camera position on screen, apply zoom and tile size.
+    // The scale is rounded so one tile always spans a whole number of pixels,
+    // and the offset is rounded so tile edges land on pixel boundaries.
+    // Together these eliminate sub-pixel seams between tiles at any zoom level.
+    const scale = Math.round(this._tileSize * this._camera.zoom);
+    const offsetX = Math.round(this.canvas.width / 2 - this._camera.position.x * scale);
+    const offsetY = Math.round(this.canvas.height / 2 - this._camera.position.y * scale);
+    this.ctx.translate(offsetX, offsetY);
     this.ctx.scale(scale, scale);
-    this.ctx.translate(-this._camera.position.x, -this._camera.position.y);
   }
 
   /** End a frame. Resets the transform. */

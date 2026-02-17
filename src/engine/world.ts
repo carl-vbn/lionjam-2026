@@ -27,6 +27,19 @@ export class World {
     return this.tiles.get(World.key(x, y)) ?? null;
   }
 
+  getNeighbors(x: number, y: number): (Tile | null)[] {
+    return [
+      this.getTile(x, y - 1), // up
+      this.getTile(x + 1, y), // right
+      this.getTile(x, y + 1), // down
+      this.getTile(x - 1, y), // left
+      this.getTile(x - 1, y - 1), // up-left
+      this.getTile(x + 1, y - 1), // up-right
+      this.getTile(x + 1, y + 1), // down-right
+      this.getTile(x - 1, y + 1), // down-left
+    ];
+  }
+
   /** Iterate over all tiles. */
   forEachTile(callback: (tile: Tile) => void): void {
     for (const tile of this.tiles.values()) {
