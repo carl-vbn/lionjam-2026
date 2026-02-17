@@ -9,5 +9,6 @@ export { World } from "./world.js";
 export { InputHandler, MouseListener, KeyListener, MouseEvent, MouseButton, MouseEventType } from "./input.js";
 export { AudioClip } from "./audio.js";
 export { AssetLoader } from "./assets.js";
+export { getImage, createOutlinedImage } from "./image.js";
 export { ParticleEffect, ParticleEffectOptions, ParticleSystem } from "./particles.js";
 export { GameLoop, createGameLoop } from "./game-loop.js";

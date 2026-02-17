@@ -1,5 +1,5 @@
 import { Entity, Flipbook, RenderContext, Vec2 } from "../engine/index.js";
-import { getImage } from "./tiles.js";
+import { getImage } from "../engine/image.js";
 
 const fpPalmTree = new Flipbook("/assets/entities/palmtree/palm.png", 2, 0.75);
 const fpPalmTreeCoconuts = new Flipbook("/assets/entities/palmtree/palmcoconut.png", 2, 0.75);

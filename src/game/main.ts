@@ -36,7 +36,7 @@ function generateSurroundings(center: Vec2, radius: number): void {
 
 // --- Entities ---
 
-const player = new Player(new Vec2(8, 8), input, generateSurroundings);
+const player = new Player(new Vec2(8, 8), input, world, generateSurroundings);
 
 world.addEntity(player);
 

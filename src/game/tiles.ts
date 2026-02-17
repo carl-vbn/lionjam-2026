@@ -1,14 +1,9 @@
 import { Flipbook } from "../engine/flipbook.js";
+import { getImage } from "../engine/image.js";
 import { RenderContext } from "../engine/render-context.js";
 import { Tile } from "../engine/tile.js";
 import { Vec2 } from "../engine/vec2.js";
 import { World } from "../engine/world.js";
-
-export function getImage(url: string): HTMLImageElement {
-    const img = new Image();
-    img.src = url;
-    return img;
-}
 
 const txSand = getImage("/assets/tiles/sand.png");
 const txGrass = getImage("/assets/tiles/grass/full.png");
@@ -22,7 +17,6 @@ const fpWaveInnerCorner = new Flipbook("/assets/tiles/water/icorner.png", 4, 0.8
 
 export abstract class NaturalTile extends Tile {
     world: World;
-    
 
     constructor(world: World, x: number, y: number) {
         super(x, y);
@@ -30,6 +24,10 @@ export abstract class NaturalTile extends Tile {
     }
 
     abstract get material(): string;
+
+    get wet(): boolean {
+        return this.material === "water";
+    }
 }
 
 export class GrassTile extends NaturalTile {
@@ -56,6 +54,11 @@ export class StoneTile extends NaturalTile {
 }
 
 export class WaterTile extends NaturalTile {
+    constructor(world: World, x: number, y: number) {
+        super(world, x, y);
+        this.solid = true;
+    }
+
     get material(): string {
         return "water";
     }
@@ -66,8 +69,27 @@ export class WaterTile extends NaturalTile {
 }
 
 export class SandTile extends NaturalTile {
+    _wet?: boolean = undefined;
+
     get material(): string {
         return "sand";
+    }
+
+    get wet(): boolean {
+        if (this._wet === undefined) {
+            // Consider sand wet if any neighbor is water
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (this.neighborMaterial(dx, dy) === "water") {
+                        this._wet = true;
+                        return true;
+                    }
+                }
+            }
+            this._wet = false;
+        }
+        
+        return this._wet;
     }
 
     private neighborMaterial(dx: number, dy: number): string | undefined {

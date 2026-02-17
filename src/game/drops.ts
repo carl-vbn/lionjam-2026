@@ -1,5 +1,5 @@
 import { Entity, RenderContext } from "../engine/index.js";
-import { getImage } from "./tiles.js";
+import { getImage } from "../engine/image.js";
 
 const stickImage = getImage("/assets/items/stick.png");
 

@@ -12,7 +12,7 @@ function subTileOffset(): Vec2 {
 }
 
 export function generateTile(world: World, x: number, y: number): NaturalTile | null {
-    let dryness = noise.perlin2(x * 0.1, y * 0.1) / 2 + 0.5;
+    let dryness = noise.perlin2((x - 10) * 0.1, y * 0.1) / 2 + 0.5;
 
     if (y > -50) {
         dryness = Math.max(0, dryness * (1 - (y + 50) * 0.01));

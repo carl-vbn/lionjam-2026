@@ -1,5 +1,6 @@
-import { Vec2, Entity, RenderContext, InputHandler } from "../engine/index.js";
-import { getImage } from "./tiles.js";
+import { Vec2, Entity, RenderContext, InputHandler, World } from "../engine/index.js";
+import { getImage } from "../engine/image.js";
+import { NaturalTile } from "./tiles.js";
 
 const playerImgs = {
   base: getImage("/assets/entities/player/base.png"),
@@ -11,15 +12,17 @@ const playerImgs = {
 export class Player extends Entity {
   velocity: Vec2;
   lastWorldGenPos: Vec2;
-  footsteps: { position: Vec2; lifetime: number; scale: number }[];
+  footsteps: { position: Vec2; lifetime: number; scale: number; color: string }[];
   footstepTimer: number;
 
   private input: InputHandler;
+  private world: World;
   private generateSurroundings: (center: Vec2, radius: number) => void;
 
   constructor(
     position: Vec2,
     input: InputHandler,
+    world: World,
     generateSurroundings: (center: Vec2, radius: number) => void,
   ) {
     super(position);
@@ -28,6 +31,7 @@ export class Player extends Entity {
     this.footsteps = [];
     this.footstepTimer = 0;
     this.input = input;
+    this.world = world;
     this.generateSurroundings = generateSurroundings;
     this.layer = 1;
     this.dynamic = true;
@@ -42,13 +46,13 @@ export class Player extends Entity {
 
     // Draw footsteps
     this.footsteps.forEach((footstep) => {
-      ctx.ctx.fillStyle = `rgba(255, 255, 255)`;
+      ctx.ctx.fillStyle = footstep.color;
       const size = footstep.scale * 0.1;
       ctx.ctx.fillRect(
-      footstep.position.x - size / 2,
-      footstep.position.y - size / 2,
-      size,
-      size
+        footstep.position.x - size / 2,
+        footstep.position.y - size / 2,
+        size,
+        size
       );
     });
 
@@ -78,7 +82,17 @@ export class Player extends Entity {
   }
 
   update(_dt: number): void {
-    this.position = this.position.add(this.velocity.scale(_dt * 10));
+    const newPos = this.position.add(this.velocity.scale(_dt * 10));
+    const futurePos = this.position.add(this.velocity.normalized().scale(_dt * 20));
+    const tileX = Math.floor(futurePos.x);
+    const tileY = Math.floor(futurePos.y);
+    const tile = this.world.getTile(tileX, tileY);
+    const onWater = tile instanceof NaturalTile && tile.wet;
+    if (tile && tile.solid) {
+      this.velocity = Vec2.zero();
+    } else {
+      this.position = newPos;
+    }
 
     let acceleration = Vec2.zero();
 
@@ -105,6 +119,7 @@ export class Player extends Entity {
           position: this.position.add(new Vec2(0, -0.175)).add(randomOffset),
           lifetime: 0.5,
           scale: 0.3,
+          color: onWater ? "rgba(64, 159, 153, 0.7)" : "rgba(255, 255, 255, 1)",
         });
       }
       this.footstepTimer = 0.15;

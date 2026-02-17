@@ -12,6 +12,9 @@ export abstract class Tile {
   /** Draw layer for z-ordering. Higher values draw on top. Default is 0. */
   layer: number = 0;
 
+  /** Whether this tile blocks entity movement. Default is false. */
+  solid: boolean = false;
+
   constructor(x: number, y: number) {
     this.position = new Vec2(x, y);
   }

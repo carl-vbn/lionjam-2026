@@ -29,12 +29,22 @@ export class Flipbook {
     return this.frameCount * this.interval;
   }
 
-  constructor(src: string, frameCount: number, interval: number) {
+  constructor(src: HTMLImageElement | string, frameCount: number, interval: number) {
     this.frameCount = frameCount;
     this.interval = interval;
-    this.image = new Image();
-    this.image.onload = () => { this._loaded = true; };
-    this.image.src = src;
+
+    if (typeof src === "string") {
+      this.image = new Image();
+      this.image.onload = () => { this._loaded = true; };
+      this.image.src = src;
+    } else {
+      this.image = src;
+      if (this.image.complete) {
+        this._loaded = true;
+      } else {
+        this.image.onload = () => { this._loaded = true; };
+      }
+    }
   }
 
   /** Get the frame index for a given time (seconds). Loops automatically. */
