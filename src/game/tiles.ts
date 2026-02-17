@@ -12,8 +12,7 @@ export function getImage(url: string): HTMLImageElement {
 const txSand = getImage("/assets/tiles/sand.png");
 const txGrass = getImage("/assets/tiles/grass.png");
 const txBeach = getImage("/assets/tiles/beach.png");
-// const fpWater = new Flipbook("/assets/tiles/water.png", 3, 0.2);
-const txWater = getImage("/assets/tiles/water.png");
+const fpWater = new Flipbook("/assets/tiles/water.png", 3, 0.2);
 
 export abstract class NaturalTile extends Tile {
     world: World;
@@ -56,8 +55,7 @@ export class WaterTile extends NaturalTile {
     }
 
     draw(ctx: RenderContext): void {
-        // ctx.drawFlipbook(fpWater, 0, 0, 1, 1);
-        ctx.drawImage(txWater, 0, 0, 1, 1);
+        ctx.drawFlipbook(fpWater, 0, 0, 1, 1);
     }
 }
 
