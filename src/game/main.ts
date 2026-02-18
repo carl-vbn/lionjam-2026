@@ -13,8 +13,7 @@ const camera = new Camera(new Vec2(8, 8), 1);
 const ctx = createContext({ canvas, camera, tileSize: 128 });
 const world = new World();
 const particles = new ParticleSystem();
-const input = new InputHandler(ctx);
-input.setWorld(world);
+const input = InputHandler.init(ctx, world);
 
 function generateSurroundings(center: Vec2, radius: number): void {
   const startX = Math.floor(center.x - radius);
@@ -36,7 +35,7 @@ function generateSurroundings(center: Vec2, radius: number): void {
 
 // --- Entities ---
 
-const player = new Player(new Vec2(8, 8), input, world, generateSurroundings);
+const player = new Player(new Vec2(8, 8), world, generateSurroundings);
 
 world.addEntity(player);
 
@@ -87,6 +86,8 @@ function drawHUD(dt: number): void {
   native.fillRect(8, 8, 400, 28);
   native.font = "14px monospace";
   native.fillStyle = "#ffffff";
+  native.textBaseline = "alphabetic";
+  native.textAlign = "left";
   native.fillText(
     `Camera: (${camera.position.x.toFixed(1)}, ${camera.position.y.toFixed(1)})  Zoom: ${camera.zoom.toFixed(2)}  FPS: ${Math.round(fps)}`,
     16, 26,

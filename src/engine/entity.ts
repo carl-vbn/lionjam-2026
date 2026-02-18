@@ -23,6 +23,9 @@ export abstract class Entity {
    */
   size: Vec2 = new Vec2(1, 1);
 
+  /** Whether this entity can receive mouse events (clicks). Default is false. */
+  get clickable(): boolean { return false; }
+
   constructor(position: Vec2 = Vec2.zero()) {
     this.position = position;
   }
@@ -38,4 +41,10 @@ export abstract class Entity {
    * Override to add movement, animation, or game logic.
    */
   update(_dt: number): void {}
+
+  /**
+   * Called when the entity is clicked.
+   * Override to handle click interactions. If not overridden, clicks pass through.
+   */
+  onClick?(_worldPos: Vec2): void;
 }

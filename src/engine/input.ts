@@ -26,23 +26,34 @@ function toMouseButton(button: number): MouseButton {
  * Provides screen-to-world coordinate conversion and tile click detection.
  */
 export class InputHandler {
+  private static instance: InputHandler | null = null;
+
+  static init(renderCtx: RenderContext, world: World): InputHandler {
+    if (InputHandler.instance) {
+      InputHandler.instance.dispose();
+    }
+    InputHandler.instance = new InputHandler(renderCtx, world);
+    return InputHandler.instance;
+  }
+
+  static getInstance(): InputHandler {
+    if (!InputHandler.instance) {
+      throw new Error("InputHandler not initialized. Call InputHandler.init() first.");
+    }
+    return InputHandler.instance;
+  }
+
   private mouseListeners: MouseListener[] = [];
   private keyListeners: KeyListener[] = [];
   private keysDown: Set<string> = new Set();
-  private world: World | null = null;
   private cleanupFns: (() => void)[] = [];
   private lastMousePos: { screenPos: Vec2; worldPos: Vec2 } = {
     screenPos: new Vec2(0, 0),
     worldPos: new Vec2(0, 0),
   };
 
-  constructor(private renderCtx: RenderContext) {
+  private constructor(private renderCtx: RenderContext, private world: World) {
     this.attach();
-  }
-
-  /** Set the world used for tile click detection. */
-  setWorld(world: World | null): void {
-    this.world = world;
   }
 
   onMouse(listener: MouseListener): () => void {
@@ -84,13 +95,18 @@ export class InputHandler {
       // Update the last mouse position
       this.lastMousePos = { screenPos, worldPos };
 
-      // Tile click detection
+      // Click detection for tiles and entities
       if (type === "click" && this.world) {
         const tileX = Math.floor(worldPos.x);
         const tileY = Math.floor(worldPos.y);
         const tile = this.world.getTile(tileX, tileY);
         if (tile) {
           tile.onClick(worldPos);
+        }
+
+        const entity = this.world.getClickableEntityAt(worldPos);
+        if (entity) {
+          entity.onClick!(worldPos);
         }
       }
 

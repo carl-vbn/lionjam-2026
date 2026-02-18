@@ -10,27 +10,34 @@ const playerImgs = {
 };
 
 export class Player extends Entity {
+  private static instance: Player | null = null;
+
+  static getInstance(): Player {
+    if (!Player.instance) {
+      throw new Error("Player not initialized. Create a Player instance first.");
+    }
+    return Player.instance;
+  }
+
   velocity: Vec2;
   lastWorldGenPos: Vec2;
   footsteps: { position: Vec2; lifetime: number; scale: number; color: string }[];
   footstepTimer: number;
 
-  private input: InputHandler;
   private world: World;
   private generateSurroundings: (center: Vec2, radius: number) => void;
 
   constructor(
     position: Vec2,
-    input: InputHandler,
     world: World,
     generateSurroundings: (center: Vec2, radius: number) => void,
   ) {
     super(position);
+    Player.instance = this;
     this.velocity = Vec2.zero();
     this.lastWorldGenPos = position.clone();
     this.footsteps = [];
     this.footstepTimer = 0;
-    this.input = input;
     this.world = world;
     this.generateSurroundings = generateSurroundings;
     this.layer = 1;
@@ -69,7 +76,7 @@ export class Player extends Entity {
       eyeBaseOffsets = [new Vec2(-0.28, -0.385)];
     }
 
-    const { worldPos: mousePos } = this.input.getMousePos();
+    const { worldPos: mousePos } = InputHandler.getInstance().getMousePos();
 
     const direction = mousePos.sub(this.position).normalized();
     const eyeOffset = direction.scale(0.01);
@@ -96,10 +103,10 @@ export class Player extends Entity {
 
     let acceleration = Vec2.zero();
 
-    if (this.input.isKeyDown("w")) acceleration.y -= 1;
-    if (this.input.isKeyDown("s")) acceleration.y += 1;
-    if (this.input.isKeyDown("a")) acceleration.x -= 1;
-    if (this.input.isKeyDown("d")) acceleration.x += 1;
+    if (InputHandler.getInstance().isKeyDown("w")) acceleration.y -= 1;
+    if (InputHandler.getInstance().isKeyDown("s")) acceleration.y += 1;
+    if (InputHandler.getInstance().isKeyDown("a")) acceleration.x -= 1;
+    if (InputHandler.getInstance().isKeyDown("d")) acceleration.x += 1;
 
     if (acceleration.length() > 0) {
       acceleration = acceleration.normalized().scale(0.1);

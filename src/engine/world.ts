@@ -1,6 +1,7 @@
 import { Tile } from "./tile.js";
 import { Entity } from "./entity.js";
 import { RenderContext } from "./render-context.js";
+import { Vec2 } from "./vec2.js";
 
 function compareEntities(a: Entity, b: Entity): number {
   if (a.layer !== b.layer) return a.layer - b.layer;
@@ -107,6 +108,26 @@ export class World {
         this.insertEntitySorted(entity);
       }
     }
+  }
+
+  /**
+   * Find the clickable entity at the given world position with the highest y (closest to camera).
+   * Only considers entities where clickable is true.
+   */
+  getClickableEntityAt(worldPos: Vec2): Entity | null {
+    let best: Entity | null = null;
+    for (const entity of this.entities) {
+      if (!entity.clickable) continue;
+      const ex = entity.position.x - entity.size.x / 2;
+      const ey = entity.position.y - entity.size.y;
+      if (worldPos.x >= ex && worldPos.x <= ex + entity.size.x &&
+          worldPos.y >= ey && worldPos.y <= ey + entity.size.y) {
+        if (!best || entity.layer > best.layer || (entity.layer === best.layer && entity.position.y > best.position.y)) {
+          best = entity;
+        }
+      }
+    }
+    return best;
   }
 
   /**

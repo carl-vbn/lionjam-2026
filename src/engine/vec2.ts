@@ -35,6 +35,10 @@ export class Vec2 {
     return this.sub(other).length();
   }
 
+  distanceSquaredTo(other: Vec2): number {
+    return this.sub(other).lengthSquared();
+  }
+
   angle(): number {
     return Math.atan2(this.y, this.x);
   }

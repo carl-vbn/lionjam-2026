@@ -1,13 +1,15 @@
+import { createOutlinedImage } from "./image.js";
+
 /**
  * A flipbook animation backed by a horizontal sprite sheet.
  * Each frame occupies an equal-width region of the image, laid out left to right.
  * The image is loaded automatically from the provided path.
  */
 export class Flipbook {
-  readonly image: HTMLImageElement;
-  readonly frameCount: number;
+  image: HTMLImageElement;
+  frameCount: number;
   /** Time in seconds between frames. */
-  readonly interval: number;
+  interval: number;
   private _loaded: boolean = false;
 
   get loaded(): boolean {
@@ -29,16 +31,24 @@ export class Flipbook {
     return this.frameCount * this.interval;
   }
 
-  constructor(src: HTMLImageElement | string, frameCount: number, interval: number) {
+  constructor(src: HTMLImageElement | string, frameCount: number, interval: number, outline: { color: string; width: number } | null = null) {
     this.frameCount = frameCount;
     this.interval = interval;
-
+    
     if (typeof src === "string") {
       this.image = new Image();
-      this.image.onload = () => { this._loaded = true; };
       this.image.src = src;
     } else {
       this.image = src;
+    }
+
+    if (outline) {
+      this._loaded = false;
+      createOutlinedImage(this.image, outline.width, outline.color).then((outlinedImg) => {
+        this.image = outlinedImg;
+        this._loaded = true;
+      });
+    } else {
       if (this.image.complete) {
         this._loaded = true;
       } else {

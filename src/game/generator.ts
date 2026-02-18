@@ -1,7 +1,7 @@
 import noise from "../engine/perlin.js";
 import { Vec2 } from "../engine/vec2.js";
 import { World } from "../engine/world.js";
-import { Stick } from "./drops.js";
+import { Item, ItemId } from "./items.js";
 import { GrassTile, NaturalTile, SandTile, StoneTile, WaterTile } from "./tiles.js";
 import { Bush, PalmTree, Tallgrass } from "./trees.js";
 
@@ -22,9 +22,9 @@ export function generateTile(world: World, x: number, y: number): NaturalTile | 
 
     // Entity spawning
     if (dryness < 0.3 && dryness > 0.2 && Math.random() < 0.01) {
-        world.addEntity(new Stick(new Vec2(x + 0.5, y + 0.5)));
+        world.addEntity(new Item(new Vec2(x + 0.5, y + 0.5), world, ItemId.Stick));
     } else if (dryness > 0.3 && Math.random() < 0.05 * (-y / 100)) {
-        world.addEntity(new PalmTree(new Vec2(x + 0.5, y + 0.5)));
+        world.addEntity(new PalmTree(new Vec2(x + 0.5, y + 0.5), Math.random() < 0.2, world));
     } else if (dryness > 0.2 && Math.random() < 0.04 * (-y / 50)) {
         world.addEntity(new Bush(new Vec2(x + 0.5, y + 0.5).add(subTileOffset())));
     } else if (dryness > 0.8 && Math.random() < Math.max(0.5, 0.05 * (-y / 50))) {
