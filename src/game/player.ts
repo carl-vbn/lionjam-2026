@@ -1,12 +1,18 @@
 import { Vec2, Entity, RenderContext, InputHandler, World } from "../engine/index.js";
 import { getImage } from "../engine/image.js";
 import { NaturalTile } from "./tiles.js";
+import { ItemId } from "./items.js";
 
 const playerImgs = {
   base: getImage("/assets/entities/player/base.png"),
   right: getImage("/assets/entities/player/right.png"),
   left: getImage("/assets/entities/player/left.png"),
   eye: getImage("/assets/entities/player/eye.png"),
+};
+
+export type InventorySlot = {
+  item: ItemId;
+  quantity: number;
 };
 
 export class Player extends Entity {
@@ -23,6 +29,16 @@ export class Player extends Entity {
   lastWorldGenPos: Vec2;
   footsteps: { position: Vec2; lifetime: number; scale: number; color: string }[];
   footstepTimer: number;
+  inventory: InventorySlot[] = [];
+
+  addItem(itemId: ItemId, quantity = 1): void {
+    const existing = this.inventory.find(slot => slot.item === itemId);
+    if (existing) {
+      existing.quantity += quantity;
+    } else {
+      this.inventory.push({ item: itemId, quantity });
+    }
+  }
 
   private world: World;
   private generateSurroundings: (center: Vec2, radius: number) => void;

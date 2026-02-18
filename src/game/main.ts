@@ -5,7 +5,7 @@ import {
 } from "../engine/index.js";
 import { generateTile } from "./generator.js";
 import { Player } from "./player.js";
-import { drawHUD } from "./ui.js";
+import { drawHUD, handleUIClick } from "./ui.js";
 
 // --- Setup ---
 
@@ -50,6 +50,8 @@ canvas.addEventListener("wheel", (e) => {
   const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
   camera.setZoom(Math.max(0.25, Math.min(4, camera.zoom * zoomFactor)));
 });
+
+input.setUIClickHandler(handleUIClick);
 
 // Spawn texture chunk particles on click
 input.onMouse((e) => {

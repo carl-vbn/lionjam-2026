@@ -25,6 +25,8 @@ function toMouseButton(button: number): MouseButton {
  * Handles mouse and keyboard input for the engine.
  * Provides screen-to-world coordinate conversion and tile click detection.
  */
+export type UIClickHandler = (screenPos: Vec2, screenWidth: number, screenHeight: number) => boolean;
+
 export class InputHandler {
   private static instance: InputHandler | null = null;
 
@@ -47,6 +49,7 @@ export class InputHandler {
   private keyListeners: KeyListener[] = [];
   private keysDown: Set<string> = new Set();
   private cleanupFns: (() => void)[] = [];
+  private uiClickHandler: UIClickHandler | null = null;
   private lastMousePos: { screenPos: Vec2; worldPos: Vec2 } = {
     screenPos: new Vec2(0, 0),
     worldPos: new Vec2(0, 0),
@@ -81,6 +84,11 @@ export class InputHandler {
     return this.lastMousePos;
   }
 
+  /** Register a UI click handler that runs before world click dispatch. */
+  setUIClickHandler(handler: UIClickHandler): void {
+    this.uiClickHandler = handler;
+  }
+
   private attach(): void {
     const canvas = this.renderCtx.canvas;
 
@@ -94,6 +102,13 @@ export class InputHandler {
 
       // Update the last mouse position
       this.lastMousePos = { screenPos, worldPos };
+
+      // Check UI first; if absorbed, skip world dispatch and listeners
+      if (type === "click" && this.uiClickHandler) {
+        if (this.uiClickHandler(screenPos, this.renderCtx.width, this.renderCtx.height)) {
+          return;
+        }
+      }
 
       // Click detection for tiles and entities
       if (type === "click" && this.world) {

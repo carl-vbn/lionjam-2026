@@ -44,6 +44,11 @@ const PICKUP_DISTANCE_SQ = 1; // 1 tile
 const PICKUP_DURATION = 0.3;
 const SPAWN_DURATION = 0.4;
 
+export function getItemSprite(itemId: ItemId, highlighted = false): HTMLImageElement {
+    const assets = loadItemAssets(itemId);
+    return (highlighted && assets.highlighted) ? assets.highlighted : assets.normal;
+}
+
 export class Item extends Entity {
     private itemId: ItemId;
     private world: World;
@@ -95,6 +100,7 @@ export class Item extends Entity {
         if (this.pickingUp) {
             this.pickupProgress += dt / PICKUP_DURATION;
             if (this.pickupProgress >= 1) {
+                Player.getInstance().addItem(this.itemId);
                 this.world.removeEntity(this);
                 return;
             }

@@ -6,7 +6,7 @@ export { Flipbook } from "./flipbook.js";
 export { Tile } from "./tile.js";
 export { Entity } from "./entity.js";
 export { World } from "./world.js";
-export { InputHandler, MouseListener, KeyListener, MouseEvent, MouseButton, MouseEventType } from "./input.js";
+export { InputHandler, UIClickHandler, MouseListener, KeyListener, MouseEvent, MouseButton, MouseEventType } from "./input.js";
 export { AudioClip } from "./audio.js";
 export { AssetLoader } from "./assets.js";
 export { getImage, createOutlinedImage } from "./image.js";
