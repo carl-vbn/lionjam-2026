@@ -116,14 +116,9 @@ export class Player extends Entity {
       const itemY = this.position.y - 0.35 - itemSize / 2;
 
       if (!facingRight) {
-        // Flip horizontally around the item center
-        const centerX = itemX + itemSize / 2;
-        ctx.ctx.save();
-        ctx.ctx.translate(centerX, 0);
-        ctx.ctx.scale(-1, 1);
-        ctx.ctx.translate(-centerX, 0);
+        ctx.pushTransform({ scale: new Vec2(-1, 1), center: new Vec2(itemX + itemSize / 2, itemY + itemSize / 2) });
         ctx.drawImage(itemSprite, itemX, itemY, itemSize, itemSize);
-        ctx.ctx.restore();
+        ctx.popTransform();
       } else {
         ctx.drawImage(itemSprite, itemX, itemY, itemSize, itemSize);
       }

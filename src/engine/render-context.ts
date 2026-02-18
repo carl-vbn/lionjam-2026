@@ -104,7 +104,9 @@ export class RenderContext {
 
     const tx = transform.translation?.x ?? 0;
     const ty = transform.translation?.y ?? 0;
-    const s = transform.scale ?? 1;
+    const rawScale = transform.scale ?? 1;
+    const sx = rawScale instanceof Vec2 ? rawScale.x : rawScale;
+    const sy = rawScale instanceof Vec2 ? rawScale.y : rawScale;
     const r = transform.rotation ?? 0;
     const cx = transform.center?.x ?? 0;
     const cy = transform.center?.y ?? 0;
@@ -112,7 +114,7 @@ export class RenderContext {
     this.ctx.translate(tx, ty);
     this.ctx.translate(cx, cy);
     this.ctx.rotate(r);
-    this.ctx.scale(s, s);
+    this.ctx.scale(sx, sy);
     this.ctx.translate(-cx, -cy);
   }
 
