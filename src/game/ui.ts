@@ -2,8 +2,9 @@ import { Camera, createOutlinedImage, getImage, InputHandler, RenderContext, Vec
 import { getItemSprite, ItemId } from "./items.js";
 import { InventorySlot, Player } from "./player.js";
 
-const txWaterbar = getImage("assets/ui/waterbar.png");
-const txFoodbar = getImage("assets/ui/foodbar.png");
+const txHealthbar = getImage("assets/ui/bars/health.png");
+const txWaterbar = getImage("assets/ui/bars/water.png");
+const txFoodbar = getImage("assets/ui/bars/food.png");
 const txCompassBg = getImage("assets/ui/compass/background.png");
 const txCompassNeedle = getImage("assets/ui/compass/needle.png");
 const txInventorySlot = getImage("assets/ui/slot.png");
@@ -98,8 +99,9 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
     const fps = 1 / dt;
     const player = Player.getInstance()!;
 
-    drawBar(ctx, ctx.width - 380, 30, txWaterbar, "#0088ff", 0.75);
-    drawBar(ctx, ctx.width - 380, 80, txFoodbar, "#ff8800", 0.5);
+    drawBar(ctx, ctx.width - 380, 30, txHealthbar, "#ff0000", player.health / 100);
+    drawBar(ctx, ctx.width - 380, 80, txWaterbar, "#0088ff", 0.75);
+    drawBar(ctx, ctx.width - 380, 130, txFoodbar, "#ff8800", 0.5);
 
     const compassAngle = Math.atan2(target.y - player.position.y, target.x - player.position.x);
 

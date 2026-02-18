@@ -3,6 +3,7 @@ import { Vec2 } from "../engine/vec2.js";
 import { World } from "../engine/world.js";
 import { Item, ItemId } from "./items.js";
 import { GrassTile, NaturalTile, SandTile, StoneTile, WaterTile } from "./tiles.js";
+import { Enemy } from "./enemy.js";
 import { Bush, PalmTree, Tallgrass } from "./trees.js";
 
 function subTileOffset(): Vec2 {
@@ -18,6 +19,11 @@ export function generateTile(world: World, x: number, y: number): NaturalTile | 
         dryness = Math.max(0, dryness * (1 - (y + 50) * 0.01));
     } else {
         dryness += (-50 - y) * 0.01;
+    }
+
+    // Enemy spawning (only in the north, y < -20)
+    if (y < -20 && dryness > 0.2 && Math.random() < 0.005) {
+        world.addEntity(new Enemy(new Vec2(x + 0.5, y + 0.5), world));
     }
 
     // Entity spawning

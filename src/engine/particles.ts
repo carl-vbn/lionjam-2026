@@ -150,7 +150,20 @@ export class ParticleEffect {
  * Manages multiple particle effects, automatically cleaning up finished ones.
  */
 export class ParticleSystem {
+  private static instance: ParticleSystem | null = null;
+
+  static getInstance(): ParticleSystem {
+    if (!ParticleSystem.instance) {
+      throw new Error("ParticleSystem not initialized. Create a ParticleSystem instance first.");
+    }
+    return ParticleSystem.instance;
+  }
+
   private effects: ParticleEffect[] = [];
+
+  constructor() {
+    ParticleSystem.instance = this;
+  }
 
   spawn(options: ParticleEffectOptions): ParticleEffect {
     const effect = new ParticleEffect(options);

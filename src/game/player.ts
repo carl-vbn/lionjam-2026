@@ -1,8 +1,9 @@
-import { Vec2, Entity, RenderContext, InputHandler, World } from "../engine/index.js";
-import { getImage } from "../engine/image.js";
+import { Vec2, Entity, ParticleSystem, RenderContext, InputHandler, World } from "../engine/index.js";
+import { createWhiteSilhouette, getImage } from "../engine/image.js";
 import { NaturalTile } from "./tiles.js";
-import { getItemSprite, ItemId } from "./items.js";
+import { getItemSprite, Item, ItemId } from "./items.js";
 import { getSelectedSlot } from "./ui.js";
+import { smokeSprite } from "./enemy.js";
 
 const playerImgs = {
   base: getImage("/assets/entities/player/base.png"),
@@ -10,6 +11,13 @@ const playerImgs = {
   left: getImage("/assets/entities/player/left.png"),
   eye: getImage("/assets/entities/player/eye.png"),
 };
+
+const whiteSilhouettes: { base: HTMLImageElement | null; right: HTMLImageElement | null; left: HTMLImageElement | null } = {
+  base: null, right: null, left: null,
+};
+createWhiteSilhouette(playerImgs.base).then((img) => { whiteSilhouettes.base = img; });
+createWhiteSilhouette(playerImgs.right).then((img) => { whiteSilhouettes.right = img; });
+createWhiteSilhouette(playerImgs.left).then((img) => { whiteSilhouettes.left = img; });
 
 export type InventorySlot = {
   item: ItemId;
@@ -27,10 +35,63 @@ export class Player extends Entity {
   }
 
   velocity: Vec2;
+  knockbackVelocity: Vec2 = Vec2.zero();
   lastWorldGenPos: Vec2;
   footsteps: { position: Vec2; lifetime: number; scale: number; color: string }[];
   footstepTimer: number;
   inventory: InventorySlot[] = [];
+  health = 100;
+  flashTimer = 0;
+  private dead = false;
+  private respawnTimer = 0;
+
+  applyKnockback(direction: Vec2): void {
+    this.knockbackVelocity = this.knockbackVelocity.add(direction);
+  }
+
+  takeDamage(amount: number): void {
+    if (this.dead) return;
+    this.health -= amount;
+    this.flashTimer = 0.15;
+
+    if (this.health <= 0) {
+      this.health = 0;
+      this.die();
+    }
+  }
+
+  private die(): void {
+    this.dead = true;
+    this.velocity = Vec2.zero();
+    this.knockbackVelocity = Vec2.zero();
+    this.respawnTimer = 3;
+
+    // Smoke particles
+    ParticleSystem.getInstance().spawn({
+      sprite: smokeSprite,
+      count: 12,
+      position: this.position.add(new Vec2(0, -0.35)),
+      size: 0.4,
+      lifetime: 0.8,
+      speed: 1.5,
+    });
+
+    // Drop all items
+    for (const slot of this.inventory) {
+      for (let i = 0; i < slot.quantity; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 0.3 + Math.random() * 0.5;
+        const landPos = this.position.add(new Vec2(Math.cos(angle) * radius, Math.sin(angle) * radius));
+        const item = new Item(landPos, this.world, slot.item, this.position);
+        this.world.addEntity(item);
+      }
+    }
+    this.inventory = [];
+  }
+
+  get isDead(): boolean {
+    return this.dead;
+  }
 
   addItem(itemId: ItemId, quantity = 1): void {
     const existing = this.inventory.find(slot => slot.item === itemId);
@@ -62,6 +123,8 @@ export class Player extends Entity {
   }
 
   draw(ctx: RenderContext): void {
+    if (this.dead) return;
+
     // Draw shadow (at feet)
     ctx.ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
     ctx.ctx.beginPath();
@@ -81,8 +144,14 @@ export class Player extends Entity {
     });
 
     // Draw player (sprite extends upward from bottom-center pivot)
-    const img = this.velocity.x > 0.1 ? playerImgs.right : this.velocity.x < -0.1 ? playerImgs.left : playerImgs.base;
-    ctx.drawImage(img, this.position.x - 0.75 / 2, this.position.y - 0.75, 0.75, 0.75);
+    const movingRight = this.velocity.x > 0.1;
+    const movingLeft = this.velocity.x < -0.1;
+    const img = movingRight ? playerImgs.right : movingLeft ? playerImgs.left : playerImgs.base;
+    const whiteImg = this.flashTimer > 0
+      ? (movingRight ? whiteSilhouettes.right : movingLeft ? whiteSilhouettes.left : whiteSilhouettes.base)
+      : null;
+
+    ctx.drawImage(whiteImg ?? img, this.position.x - 0.75 / 2, this.position.y - 0.75, 0.75, 0.75);
 
     // Draw eyes
     let eyeBaseOffsets = [new Vec2(-0.21, -0.335), new Vec2(0.03, -0.36)];
@@ -126,8 +195,34 @@ export class Player extends Entity {
   }
 
   update(_dt: number): void {
-    const newPos = this.position.add(this.velocity.scale(_dt * 10));
-    const futurePos = this.position.add(this.velocity.normalized().scale(_dt * 20));
+    if (this.flashTimer > 0) {
+      this.flashTimer -= _dt;
+    }
+
+    if (this.dead) {
+      this.respawnTimer -= _dt;
+      if (this.respawnTimer <= 0) {
+        this.dead = false;
+        this.position = Vec2.zero();
+        this.health = 50;
+        this.velocity = Vec2.zero();
+        this.knockbackVelocity = Vec2.zero();
+        this.generateSurroundings(this.position, 12);
+        this.lastWorldGenPos = this.position.clone();
+      }
+      return;
+    }
+
+    // Decay knockback smoothly
+    const knockbackDecay = Math.pow(0.02, _dt);
+    this.knockbackVelocity = this.knockbackVelocity.scale(knockbackDecay);
+    if (this.knockbackVelocity.lengthSquared() < 0.001) {
+      this.knockbackVelocity = Vec2.zero();
+    }
+
+    const totalVelocity = this.velocity.scale(_dt * 10).add(this.knockbackVelocity.scale(_dt));
+    const newPos = this.position.add(totalVelocity);
+    const futurePos = this.position.add(totalVelocity.normalized().scale(_dt * 20));
     const tileX = Math.floor(futurePos.x);
     const tileY = Math.floor(futurePos.y);
     const tile = this.world.getTile(tileX, tileY);

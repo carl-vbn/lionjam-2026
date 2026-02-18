@@ -106,7 +106,7 @@ export class Item extends Entity {
             }
             const t = this.pickupProgress;
             this.position = this.startPos.lerp(player.position, t * t);
-        } else if (distSq < PICKUP_DISTANCE_SQ) {
+        } else if (distSq < PICKUP_DISTANCE_SQ && !player.isDead) {
             this.highlighted = false;
             this.pickingUp = true;
             this.pickupProgress = 0;
