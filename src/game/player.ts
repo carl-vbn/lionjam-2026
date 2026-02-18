@@ -1,7 +1,8 @@
 import { Vec2, Entity, RenderContext, InputHandler, World } from "../engine/index.js";
 import { getImage } from "../engine/image.js";
 import { NaturalTile } from "./tiles.js";
-import { ItemId } from "./items.js";
+import { getItemSprite, ItemId } from "./items.js";
+import { getSelectedSlot } from "./ui.js";
 
 const playerImgs = {
   base: getImage("/assets/entities/player/base.png"),
@@ -101,6 +102,31 @@ export class Player extends Entity {
     for (const offset of eyeBaseOffsets) {
       const eyePos = this.position.add(offset);
       ctx.drawImage(playerImgs.eye, eyePos.x - 0.35, eyePos.y - 0.35, 0.7, 0.7);
+    }
+
+    // Draw held item
+    const slot = getSelectedSlot();
+    if (slot >= 0 && slot < this.inventory.length) {
+      const itemSprite = getItemSprite(this.inventory[slot].item);
+      const moving = Math.abs(this.velocity.x) > 0.1;
+      const facingRight = moving ? this.velocity.x > 0 : mousePos.x > this.position.x;
+      const itemSize = 0.35;
+      const offsetX = facingRight ? 0.3 : -0.3;
+      const itemX = this.position.x + offsetX - itemSize / 2;
+      const itemY = this.position.y - 0.35 - itemSize / 2;
+
+      if (!facingRight) {
+        // Flip horizontally around the item center
+        const centerX = itemX + itemSize / 2;
+        ctx.ctx.save();
+        ctx.ctx.translate(centerX, 0);
+        ctx.ctx.scale(-1, 1);
+        ctx.ctx.translate(-centerX, 0);
+        ctx.drawImage(itemSprite, itemX, itemY, itemSize, itemSize);
+        ctx.ctx.restore();
+      } else {
+        ctx.drawImage(itemSprite, itemX, itemY, itemSize, itemSize);
+      }
     }
   }
 
