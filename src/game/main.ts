@@ -1,7 +1,7 @@
 import {
   Vec2, Camera, createContext, World, Tile,
   InputHandler, createGameLoop, ParticleSystem,
-  Flipbook,
+  Flipbook, extractTextureChunks,
 } from "../engine/index.js";
 import { generateTile } from "./generator.js";
 import { Player } from "./player.js";
@@ -50,27 +50,45 @@ canvas.addEventListener("wheel", (e) => {
   camera.setZoom(Math.max(0.25, Math.min(4, camera.zoom * zoomFactor)));
 });
 
-// Spawn particles on right-click
+// Spawn texture chunk particles on click
 input.onMouse((e) => {
-  if (e.type === "click") {
-    // Create a tiny 1x1 white canvas as a particle sprite
-    const sprite = document.createElement("canvas");
-    sprite.width = 4;
-    sprite.height = 4;
-    const sCtx = sprite.getContext("2d")!;
-    sCtx.fillStyle = "#ffcc44";
-    sCtx.beginPath();
-    sCtx.arc(2, 2, 2, 0, Math.PI * 2);
-    sCtx.fill();
+  if (e.type !== "click") return;
 
-    particles.spawn({
-      sprite: sprite as unknown as HTMLImageElement,
-      count: 20,
-      position: e.worldPos,
-      size: 0.2,
-      lifetime: 0.8,
-      speed: 3,
-    });
+  // Check entity first (higher priority)
+  const entity = world.getClickableEntityAt(e.worldPos);
+  if (entity) {
+    const source = entity.getParticleSource();
+    if (source) {
+      const chunks = extractTextureChunks(source, 12);
+      particles.spawn({
+        sprites: chunks,
+        count: 12,
+        position: e.worldPos,
+        size: 0.2,
+        lifetime: 0.6,
+        speed: 2.5,
+      });
+      return;
+    }
+  }
+
+  // Fall back to tile
+  const tileX = Math.floor(e.worldPos.x);
+  const tileY = Math.floor(e.worldPos.y);
+  const tile = world.getTile(tileX, tileY);
+  if (tile) {
+    const source = tile.getParticleSource();
+    if (source) {
+      const chunks = extractTextureChunks(source, 10);
+      particles.spawn({
+        sprites: chunks,
+        count: 10,
+        position: e.worldPos,
+        size: 0.15,
+        lifetime: 0.6,
+        speed: 2,
+      });
+    }
   }
 });
 

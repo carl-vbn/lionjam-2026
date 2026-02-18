@@ -1,5 +1,6 @@
-import { Vec2 } from "./vec2.js";
+import { ParticleSource } from "./particles.js";
 import { RenderContext } from "./render-context.js";
+import { Vec2 } from "./vec2.js";
 
 /**
  * Base class for free-positioned entities in the world.
@@ -47,4 +48,12 @@ export abstract class Entity {
    * Override to handle click interactions. If not overridden, clicks pass through.
    */
   onClick?(_worldPos: Vec2): void;
+
+  /**
+   * Return the image source and region to sample particle chunks from.
+   * Override to enable texture-based particle effects when this entity is clicked.
+   */
+  getParticleSource(): ParticleSource | null {
+    return null;
+  }
 }

@@ -1,5 +1,6 @@
 import { Flipbook } from "../engine/flipbook.js";
 import { getImage } from "../engine/image.js";
+import { ParticleSource } from "../engine/particles.js";
 import { RenderContext } from "../engine/render-context.js";
 import { Tile } from "../engine/tile.js";
 import { Vec2 } from "../engine/vec2.js";
@@ -38,6 +39,11 @@ export class GrassTile extends NaturalTile {
     draw(ctx: RenderContext): void {
         ctx.drawImage(txGrass, 0, 0, 1, 1);
     }
+
+    getParticleSource(): ParticleSource | null {
+        if (!txGrass.complete) return null;
+        return { image: txGrass, sx: 0, sy: 0, sw: txGrass.naturalWidth, sh: txGrass.naturalHeight };
+    }
 }
 
 export class StoneTile extends NaturalTile {
@@ -65,6 +71,11 @@ export class WaterTile extends NaturalTile {
 
     draw(ctx: RenderContext): void {
         ctx.drawFlipbook(fpWater, 0, 0, 1, 1);
+    }
+
+    getParticleSource(): ParticleSource | null {
+        if (!fpWater.loaded) return null;
+        return { image: fpWater.image, sx: 0, sy: 0, sw: fpWater.frameWidth, sh: fpWater.frameHeight };
     }
 }
 
@@ -115,6 +126,11 @@ export class SandTile extends NaturalTile {
             ctx.drawImage(image, 0, 0, 1, 1);
             ctx.popTransform();
         }
+    }
+
+    getParticleSource(): ParticleSource | null {
+        if (!txSand.complete) return null;
+        return { image: txSand, sx: 0, sy: 0, sw: txSand.naturalWidth, sh: txSand.naturalHeight };
     }
 
     draw(ctx: RenderContext): void {

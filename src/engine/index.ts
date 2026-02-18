@@ -10,5 +10,5 @@ export { InputHandler, MouseListener, KeyListener, MouseEvent, MouseButton, Mous
 export { AudioClip } from "./audio.js";
 export { AssetLoader } from "./assets.js";
 export { getImage, createOutlinedImage } from "./image.js";
-export { ParticleEffect, ParticleEffectOptions, ParticleSystem } from "./particles.js";
+export { ParticleEffect, ParticleEffectOptions, ParticleSource, ParticleSystem, extractTextureChunks } from "./particles.js";
 export { GameLoop, createGameLoop } from "./game-loop.js";

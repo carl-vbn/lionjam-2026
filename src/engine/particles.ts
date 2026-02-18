@@ -1,6 +1,45 @@
 import { Vec2 } from "./vec2.js";
 import { RenderContext } from "./render-context.js";
 
+/**
+ * Describes a region of an image to sample particle chunks from.
+ */
+export interface ParticleSource {
+  image: CanvasImageSource;
+  sx: number;
+  sy: number;
+  sw: number;
+  sh: number;
+}
+
+/**
+ * Extract random square chunks from a source image region.
+ * Returns an array of small canvases, each containing a random piece of the source.
+ */
+export function extractTextureChunks(
+  source: ParticleSource,
+  count: number,
+  chunkSize: number = 16,
+): HTMLCanvasElement[] {
+  const { image, sx, sy, sw, sh } = source;
+  const chunks: HTMLCanvasElement[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const cx = sx + Math.floor(Math.random() * Math.max(1, sw - chunkSize));
+    const cy = sy + Math.floor(Math.random() * Math.max(1, sh - chunkSize));
+    const size = Math.min(chunkSize, sw, sh);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(image, cx, cy, size, size, 0, 0, size, size);
+    chunks.push(canvas);
+  }
+
+  return chunks;
+}
+
 interface Particle {
   position: Vec2;
   velocity: Vec2;
@@ -8,10 +47,14 @@ interface Particle {
   rotationSpeed: number;
   alpha: number;
   age: number;
+  sprite: HTMLImageElement | HTMLCanvasElement;
 }
 
 export interface ParticleEffectOptions {
-  sprite: HTMLImageElement;
+  /** Single sprite used for all particles. */
+  sprite?: HTMLImageElement | HTMLCanvasElement;
+  /** Array of sprites — each particle picks one at random. Takes priority over sprite. */
+  sprites?: (HTMLImageElement | HTMLCanvasElement)[];
   count: number;
   position: Vec2;
   /** Size of each particle in tile units. Default 0.25. */
@@ -28,7 +71,6 @@ export interface ParticleEffectOptions {
  */
 export class ParticleEffect {
   private particles: Particle[] = [];
-  private sprite: HTMLImageElement;
   private size: number;
   private lifetime: number;
   private _finished: boolean = false;
@@ -38,7 +80,12 @@ export class ParticleEffect {
   }
 
   constructor(options: ParticleEffectOptions) {
-    this.sprite = options.sprite;
+    const sprites = options.sprites;
+    const fallbackSprite = options.sprite;
+    if (!sprites && !fallbackSprite) {
+      throw new Error("ParticleEffectOptions must have either sprite or sprites");
+    }
+
     this.size = options.size ?? 0.25;
     this.lifetime = options.lifetime ?? 1;
     const speed = options.speed ?? 2;
@@ -46,6 +93,9 @@ export class ParticleEffect {
     for (let i = 0; i < options.count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const spd = speed * (0.5 + Math.random() * 0.5);
+      const particleSprite = sprites
+        ? sprites[Math.floor(Math.random() * sprites.length)]
+        : fallbackSprite!;
       this.particles.push({
         position: options.position.clone(),
         velocity: Vec2.fromAngle(angle, spd),
@@ -53,6 +103,7 @@ export class ParticleEffect {
         rotationSpeed: (Math.random() - 0.5) * 6,
         alpha: 1,
         age: 0,
+        sprite: particleSprite,
       });
     }
   }
@@ -88,7 +139,7 @@ export class ParticleEffect {
         rotation: p.rotation,
         center: new Vec2(half, half),
       });
-      ctx.drawImage(this.sprite, 0, 0, this.size, this.size);
+      ctx.drawImage(p.sprite, 0, 0, this.size, this.size);
       ctx.popTransform();
     }
     ctx.resetAlpha();

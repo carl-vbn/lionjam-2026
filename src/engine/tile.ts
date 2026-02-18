@@ -1,3 +1,4 @@
+import { ParticleSource } from "./particles.js";
 import { RenderContext } from "./render-context.js";
 import { Vec2 } from "./vec2.js";
 
@@ -36,4 +37,12 @@ export abstract class Tile {
    * Override to add click behavior.
    */
   onClick(_worldPos: Vec2): void {}
+
+  /**
+   * Return the image source and region to sample particle chunks from.
+   * Override to enable texture-based particle effects when this tile is clicked.
+   */
+  getParticleSource(): ParticleSource | null {
+    return null;
+  }
 }

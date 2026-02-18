@@ -1,4 +1,4 @@
-import { Entity, Flipbook, InputHandler, RenderContext, Vec2, World } from "../engine/index.js";
+import { Entity, Flipbook, InputHandler, ParticleSource, RenderContext, Vec2, World } from "../engine/index.js";
 import { createWhiteSilhouette, getImage } from "../engine/image.js";
 import { Item, ItemId } from "./items.js";
 import { Player } from "./player.js";
@@ -36,6 +36,14 @@ export class PalmTree extends Entity {
 
     get clickable(): boolean {
         return this.hasCoconuts && this.highlighted;
+    }
+
+    getParticleSource(): ParticleSource | null {
+        const img = palmTreeAssets.coconuts.image;
+        if (!palmTreeAssets.coconuts.loaded) return null;
+        const fw = palmTreeAssets.coconuts.frameWidth;
+        const fh = palmTreeAssets.coconuts.frameHeight;
+        return { image: img, sx: 0, sy: 0, sw: fw, sh: fh };
     }
 
     draw(ctx: RenderContext): void {
