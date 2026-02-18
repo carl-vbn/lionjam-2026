@@ -5,6 +5,7 @@ import {
 } from "../engine/index.js";
 import { generateTile } from "./generator.js";
 import { Player } from "./player.js";
+import { drawHUD } from "./ui.js";
 
 // --- Setup ---
 
@@ -92,26 +93,6 @@ input.onMouse((e) => {
   }
 });
 
-// --- HUD text ---
-
-let fps = 0;
-
-function drawHUD(dt: number): void {
-  fps += (1 / dt - fps) * 0.05;
-
-  const native = ctx.ctx;
-  native.fillStyle = "rgba(0, 0, 0, 0.5)";
-  native.fillRect(8, 8, 400, 28);
-  native.font = "14px monospace";
-  native.fillStyle = "#ffffff";
-  native.textBaseline = "alphabetic";
-  native.textAlign = "left";
-  native.fillText(
-    `Camera: (${camera.position.x.toFixed(1)}, ${camera.position.y.toFixed(1)})  Zoom: ${camera.zoom.toFixed(2)}  FPS: ${Math.round(fps)}`,
-    16, 26,
-  );
-}
-
 // --- Game loop ---
 
 const loop = createGameLoop((dt) => {
@@ -122,7 +103,7 @@ const loop = createGameLoop((dt) => {
   world.draw(ctx);
   particles.draw(ctx);
   ctx.endFrame();
-  drawHUD(dt);
+  drawHUD(ctx, dt, camera);
 
   // Move camera to follow player
   const followSpeed = 2;
