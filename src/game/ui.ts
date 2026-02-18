@@ -142,7 +142,8 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
     const { screenPos: mousePos } = InputHandler.getInstance()!.getMousePos();
     
     for (let i = 0; i < player.inventory.length; i++) {
-        const slotHovered = mousePos.x >= ctx.width - 100 - i * 68 && mousePos.x <= ctx.width - 36 - i * 68 && mousePos.y >= ctx.height - 94 && mousePos.y <= ctx.height - 30;
-        drawInventorySlot(ctx, ctx.width - 100 - i * 68, ctx.height - 94, player.inventory[i], slotHovered, i === selectedSlot);
+        let j = player.inventory.length - 1 - i; // reverse order for right-to-left
+        const slotHovered = mousePos.x >= ctx.width - 100 - j * 68 && mousePos.x <= ctx.width - 36 - j * 68 && mousePos.y >= ctx.height - 94 && mousePos.y <= ctx.height - 30;
+        drawInventorySlot(ctx, ctx.width - 100 - j * 68, ctx.height - 94, player.inventory[i], slotHovered, i === selectedSlot);
     }
 }
