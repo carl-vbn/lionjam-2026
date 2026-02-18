@@ -7,6 +7,21 @@ export enum ItemId {
     Coconut = "coconut",
 }
 
+export interface WeaponData {
+    damage: number;
+    range: number;
+    throwable: boolean;
+}
+
+const WEAPON_DATA: Partial<Record<ItemId, WeaponData>> = {
+    [ItemId.Stick]: { damage: 10, range: 3, throwable: false },
+    [ItemId.Coconut]: { damage: 7, range: 10, throwable: true },
+};
+
+export function getWeaponData(itemId: ItemId): WeaponData | null {
+    return WEAPON_DATA[itemId] ?? null;
+}
+
 const ITEM_SPRITES: Record<ItemId, string> = {
     [ItemId.Stick]: "/assets/items/stick.png",
     [ItemId.Coconut]: "/assets/items/coconut.png",

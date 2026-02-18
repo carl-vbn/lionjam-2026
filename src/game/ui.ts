@@ -61,6 +61,10 @@ export function getSelectedSlot(): number {
     return selectedSlot;
 }
 
+export function setSelectedSlot(index: number): void {
+    selectedSlot = index;
+}
+
 /**
  * Checks if a screen-space click lands on a UI element.
  * Returns true if the click was absorbed by UI (should not propagate to the world).

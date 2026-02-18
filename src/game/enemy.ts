@@ -1,6 +1,8 @@
 import { Entity, InputHandler, ParticleSystem, RenderContext, Vec2, World } from "../engine/index.js";
 import { createOutlinedImage, createWhiteSilhouette, getImage } from "../engine/image.js";
 import { Player } from "./player.js";
+import { getWeaponData, getItemSprite, ItemId } from "./items.js";
+import { getSelectedSlot } from "./ui.js";
 
 // Smoke particle sprite (soft grey circle)
 export const smokeSprite = (() => {
@@ -43,6 +45,20 @@ const CHARGE_SPEED = 3;
 const KNOCKBACK_STRENGTH = 10;
 const IMPACT_DISTANCE_SQ = 0.25; // 0.5 tiles
 const IMPACT_COOLDOWN = 0.5;
+const PROJECTILE_SPEED = 12;
+const ENEMY_SEPARATION = 0.8; // minimum distance between charging enemies
+const ENEMY_SEPARATION_SQ = ENEMY_SEPARATION * ENEMY_SEPARATION;
+const SEPARATION_STRENGTH = 2;
+
+function getPlayerWeaponData() {
+    const player = Player.getInstance();
+    const slot = getSelectedSlot();
+    if (slot < 0 || slot >= player.inventory.length) return null;
+    const itemId = player.inventory[slot].item;
+    const weapon = getWeaponData(itemId);
+    if (!weapon) return null;
+    return { itemId, weapon };
+}
 
 export class Enemy extends Entity {
     private world: World;
@@ -64,7 +80,7 @@ export class Enemy extends Entity {
     }
 
     get clickable(): boolean {
-        return this.hovered;
+        return this.hovered && getPlayerWeaponData() !== null;
     }
 
     private pickWanderTarget(): Vec2 {
@@ -73,11 +89,12 @@ export class Enemy extends Entity {
         return this.position.add(new Vec2(Math.cos(angle) * radius, Math.sin(angle) * radius));
     }
 
-    onClick(_worldPos: Vec2): void {
-        this.health -= 10;
+    takeDamage(amount: number): void {
+        this.health -= amount;
         this.flashTimer = 0.15;
 
         if (this.health <= 0) {
+            Player.getInstance().chargingEnemies.delete(this);
             ParticleSystem.getInstance().spawn({
                 sprite: smokeSprite,
                 count: 10,
@@ -87,6 +104,33 @@ export class Enemy extends Entity {
                 speed: 1.5,
             });
             this.world.removeEntity(this);
+        }
+    }
+
+    onClick(_worldPos: Vec2): void {
+        const info = getPlayerWeaponData();
+        if (!info) return;
+
+        const player = Player.getInstance();
+        const distance = player.position.distanceTo(this.position);
+        const inRange = distance <= info.weapon.range;
+
+        if (info.weapon.throwable) {
+            player.removeItem(info.itemId);
+            const projectile = new Projectile(
+                player.position.clone(),
+                this,
+                info.itemId,
+                inRange ? info.weapon.damage : 0,
+                this.world,
+            );
+            this.world.addEntity(projectile);
+        } else {
+            // Melee — swing animation always plays, damage only if in range
+            player.swingItem();
+            if (inRange) {
+                this.takeDamage(info.weapon.damage);
+            }
         }
     }
 
@@ -107,16 +151,20 @@ export class Enemy extends Entity {
             return; // Too far from player, skip update
         }
 
-        // Hover detection
+        // Hover detection — only show outline when player has a weapon
         const { worldPos: mousePos } = InputHandler.getInstance().getMousePos();
-        this.hovered = Math.abs(mousePos.x - this.position.x) < 0.4 &&
-                       mousePos.y < this.position.y &&
-                       mousePos.y > this.position.y - 0.75;
+        const mouseOver = Math.abs(mousePos.x - this.position.x) < 0.4 &&
+                          mousePos.y < this.position.y &&
+                          mousePos.y > this.position.y - 0.75;
+        this.hovered = mouseOver && getPlayerWeaponData() !== null;
 
 
         if (distSq < AGGRO_RANGE_SQ && !player.isDead) {
             // Attack mode
-            this.attacking = true;
+            if (!this.attacking) {
+                this.attacking = true;
+                player.chargingEnemies.add(this);
+            }
 
             if (distSq < IMPACT_DISTANCE_SQ) {
                 // Back off after impact
@@ -127,6 +175,18 @@ export class Enemy extends Entity {
                 this.velocity = dir.scale(CHARGE_SPEED);
             }
 
+            // Separation from other charging enemies
+            let separation = Vec2.zero();
+            for (const other of player.chargingEnemies) {
+                if (other === this) continue;
+                const away = this.position.sub(other.position);
+                const dSq = away.lengthSquared();
+                if (dSq < ENEMY_SEPARATION_SQ && dSq > 0.001) {
+                    separation = separation.add(away.normalized().scale(SEPARATION_STRENGTH / Math.sqrt(dSq)));
+                }
+            }
+            this.velocity = this.velocity.add(separation);
+
             // Impact check
             if (distSq < IMPACT_DISTANCE_SQ && this.impactCooldown <= 0) {
                 const knockDir = toPlayer.normalized().scale(KNOCKBACK_STRENGTH);
@@ -136,7 +196,10 @@ export class Enemy extends Entity {
             }
         } else {
             // Idle wander mode
-            this.attacking = false;
+            if (this.attacking) {
+                this.attacking = false;
+                player.chargingEnemies.delete(this);
+            }
 
             const toTarget = this.wanderTarget.sub(this.position);
             if (toTarget.lengthSquared() < 0.5) {
@@ -201,5 +264,61 @@ export class Enemy extends Entity {
             ctx.fillRect(barX, barY, barWidth, barHeight, "rgba(0, 0, 0, 0.5)");
             ctx.fillRect(barX, barY, barWidth * (this.health / 50), barHeight, "#cc2222");
         }
+    }
+}
+
+class Projectile extends Entity {
+    private target: Enemy;
+    private itemId: ItemId;
+    private damage: number;
+    private world: World;
+    private startPos: Vec2;
+    private targetPos: Vec2;
+    private progress = 0;
+    private totalDistance: number;
+
+    constructor(startPos: Vec2, target: Enemy, itemId: ItemId, damage: number, world: World) {
+        super(startPos.clone());
+        this.startPos = startPos.clone();
+        this.target = target;
+        this.targetPos = target.position.clone();
+        this.itemId = itemId;
+        this.damage = damage;
+        this.world = world;
+        this.dynamic = true;
+        this.layer = 2;
+        this.totalDistance = startPos.distanceTo(this.targetPos);
+    }
+
+    update(dt: number): void {
+        if (this.totalDistance < 0.01) {
+            this.arrive();
+            return;
+        }
+
+        this.progress += (PROJECTILE_SPEED * dt) / this.totalDistance;
+
+        if (this.progress >= 1) {
+            this.position = this.targetPos.clone();
+            this.arrive();
+        } else {
+            this.position = this.startPos.lerp(this.targetPos, this.progress);
+        }
+    }
+
+    private arrive(): void {
+        if (this.damage > 0) {
+            this.target.takeDamage(this.damage);
+        } else {
+            // Still flash the enemy even if no damage
+            this.target["flashTimer"] = 0.15;
+        }
+        this.world.removeEntity(this);
+    }
+
+    draw(ctx: RenderContext): void {
+        const sprite = getItemSprite(this.itemId);
+        const size = 0.4;
+        ctx.drawImage(sprite, this.position.x - size / 2, this.position.y - size / 2, size, size);
     }
 }

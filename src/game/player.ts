@@ -3,7 +3,7 @@ import { createWhiteSilhouette, getImage } from "../engine/image.js";
 import { NaturalTile } from "./tiles.js";
 import { getItemSprite, Item, ItemId } from "./items.js";
 import { getSelectedSlot } from "./ui.js";
-import { smokeSprite } from "./enemy.js";
+import { smokeSprite, Enemy } from "./enemy.js";
 
 const playerImgs = {
   base: getImage("/assets/entities/player/base.png"),
@@ -11,6 +11,9 @@ const playerImgs = {
   left: getImage("/assets/entities/player/left.png"),
   eye: getImage("/assets/entities/player/eye.png"),
 };
+
+const SWING_DURATION = 0.25;
+const SWING_ANGLE = Math.PI / 2; // 90 degrees total arc
 
 const whiteSilhouettes: { base: HTMLImageElement | null; right: HTMLImageElement | null; left: HTMLImageElement | null } = {
   base: null, right: null, left: null,
@@ -42,8 +45,14 @@ export class Player extends Entity {
   inventory: InventorySlot[] = [];
   health = 100;
   flashTimer = 0;
+  chargingEnemies: Set<Enemy> = new Set();
+  private swingTimer = 0;
   private dead = false;
   private respawnTimer = 0;
+
+  swingItem(): void {
+    this.swingTimer = SWING_DURATION;
+  }
 
   applyKnockback(direction: Vec2): void {
     this.knockbackVelocity = this.knockbackVelocity.add(direction);
@@ -87,6 +96,7 @@ export class Player extends Entity {
       }
     }
     this.inventory = [];
+    this.chargingEnemies.clear();
   }
 
   get isDead(): boolean {
@@ -99,6 +109,31 @@ export class Player extends Entity {
       existing.quantity += quantity;
     } else {
       this.inventory.push({ item: itemId, quantity });
+    }
+  }
+
+  removeItem(itemId: ItemId, quantity = 1): void {
+    const index = this.inventory.findIndex(slot => slot.item === itemId);
+    if (index === -1) return;
+    this.inventory[index].quantity -= quantity;
+    if (this.inventory[index].quantity <= 0) {
+      this.inventory.splice(index, 1);
+    }
+  }
+
+  attackNearestEnemy(): void {
+    if (this.dead || this.chargingEnemies.size === 0) return;
+    let nearest: Enemy | null = null;
+    let nearestDistSq = Infinity;
+    for (const enemy of this.chargingEnemies) {
+      const dSq = this.position.distanceSquaredTo(enemy.position);
+      if (dSq < nearestDistSq) {
+        nearestDistSq = dSq;
+        nearest = enemy;
+      }
+    }
+    if (nearest) {
+      nearest.onClick(nearest.position);
     }
   }
 
@@ -184,6 +219,21 @@ export class Player extends Entity {
       const itemX = this.position.x + offsetX - itemSize / 2;
       const itemY = this.position.y - 0.35 - itemSize / 2;
 
+      // Swing animation: rotate the item around the hand (bottom-center of item)
+      let swingRotation = 0;
+      if (this.swingTimer > 0) {
+        const t = 1 - this.swingTimer / SWING_DURATION; // 0→1
+        // Quick swing arc: start raised, sweep down past rest, ease back
+        swingRotation = SWING_ANGLE * (1 - 2 * t) * (facingRight ? -1 : 1);
+      }
+
+      const pivotX = itemX + itemSize / 2;
+      const pivotY = itemY + itemSize;
+
+      if (swingRotation !== 0) {
+        ctx.pushTransform({ rotation: swingRotation, center: new Vec2(pivotX, pivotY) });
+      }
+
       if (!facingRight) {
         ctx.pushTransform({ scale: new Vec2(-1, 1), center: new Vec2(itemX + itemSize / 2, itemY + itemSize / 2) });
         ctx.drawImage(itemSprite, itemX, itemY, itemSize, itemSize);
@@ -191,12 +241,19 @@ export class Player extends Entity {
       } else {
         ctx.drawImage(itemSprite, itemX, itemY, itemSize, itemSize);
       }
+
+      if (swingRotation !== 0) {
+        ctx.popTransform();
+      }
     }
   }
 
   update(_dt: number): void {
     if (this.flashTimer > 0) {
       this.flashTimer -= _dt;
+    }
+    if (this.swingTimer > 0) {
+      this.swingTimer -= _dt;
     }
 
     if (this.dead) {

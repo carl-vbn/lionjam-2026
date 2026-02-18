@@ -5,7 +5,7 @@ import {
 } from "../engine/index.js";
 import { generateTile } from "./generator.js";
 import { Player } from "./player.js";
-import { drawHUD, handleUIClick } from "./ui.js";
+import { drawHUD, handleUIClick, setSelectedSlot } from "./ui.js";
 
 // --- Setup ---
 
@@ -52,6 +52,26 @@ canvas.addEventListener("wheel", (e) => {
 });
 
 input.setUIClickHandler(handleUIClick);
+
+// Keyboard shortcuts
+input.onKey((key, down) => {
+  if (!down) return;
+
+  // Q — attack nearest charging enemy
+  if (key === "q") {
+    player.attackNearestEnemy();
+    return;
+  }
+
+  // 1-9 — select inventory slot (toggle off if already selected)
+  const num = parseInt(key);
+  if (num >= 1 && num <= 9) {
+    const index = num - 1;
+    if (index < player.inventory.length) {
+      setSelectedSlot(index);
+    }
+  }
+});
 
 // Spawn texture chunk particles on click
 input.onMouse((e) => {
