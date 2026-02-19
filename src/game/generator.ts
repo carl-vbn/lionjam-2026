@@ -40,13 +40,12 @@ export function generateTile(world: World, x: number, y: number): NaturalTile | 
         const hasWater = values.some(d => d < 0.2);
         const hasSand = values.some(d => d >= 0.2 && d < 0.8);
         if (hasWater && hasSand) {
-            console.log(`Spawning shipwreck at (${x}, ${y}) with dryness values:`, values);
             world.addEntity(new Shipwreck(new Vec2(x + 1, y + 1), world));
         }
     }
 
     // Entity spawning
-    if (dryness < 0.3 && dryness > 0.2 && Math.random() < 0.01) {
+    if (dryness > 0.2 && Math.random() < 0.01) {
         world.addEntity(new Item(new Vec2(x + 0.5, y + 0.5), world, Math.random() < 0.3 ? ItemId.Rock : ItemId.Stick));
     } else if (dryness > 0.3 && Math.random() < 0.05 * (-y / 100)) {
         world.addEntity(new PalmTree(new Vec2(x + 0.5, y + 0.5), Math.random() < 0.2, world));

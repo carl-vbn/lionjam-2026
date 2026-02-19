@@ -8,6 +8,7 @@ const txSpike = getImage("/assets/ui/spike.png");
 
 export interface HintHandle {
   destroy(): void;
+  destroyAfter(seconds: number): void;
 }
 
 class HintEntity extends Entity {
@@ -19,6 +20,7 @@ class HintEntity extends Entity {
   private animTime = 0;
   private totalTime = 0;
   private destroying = false;
+  private autoDestroyAfter: number | null = null;
 
   private static readonly POPUP_DURATION = 0.2;
   private static readonly DEPOP_DURATION = 0.15;
@@ -40,6 +42,10 @@ class HintEntity extends Entity {
     this.animTime = 0;
   }
 
+  destroyAfter(seconds: number): void {
+    this.autoDestroyAfter = seconds;
+  }
+
   update(dt: number): void {
     this.animTime += dt;
     this.totalTime += dt;
@@ -47,6 +53,10 @@ class HintEntity extends Entity {
 
     if (this.destroying && this.animTime >= HintEntity.DEPOP_DURATION) {
       this.world.removeEntity(this);
+    }
+
+    if (!this.destroying && this.autoDestroyAfter !== null && this.totalTime >= this.autoDestroyAfter) {
+      this.startDestroy();
     }
   }
 
@@ -80,6 +90,7 @@ class HintEntity extends Entity {
     const baseY = this.position.y - 2;
     const spikeY = baseY + bob;
     const rectY = baseY - 0.3 + bob;
+    const rectWidth = Math.max(1, this.text.length * 0.08);
 
     ctx.setAlpha(alpha);
     ctx.pushTransform({
@@ -89,7 +100,7 @@ class HintEntity extends Entity {
 
     ctx.ctx.imageSmoothingEnabled = true;
     ctx.drawImage(txSpike, this.position.x - 0.125, spikeY, 0.25, 0.13);
-    ctx.fillRect(this.position.x - 0.5, rectY, 1, 0.3, "rgba(0, 0, 0, 0.75)");
+    ctx.fillRect(this.position.x - rectWidth / 2, rectY, rectWidth, 0.3, "rgba(0, 0, 0, 0.75)");
     ctx.drawText(this.text, this.position.x, rectY - 0.08, {
       align: "center",
       baseline: "middle",
@@ -115,5 +126,8 @@ export function attachHint(
     destroy() {
       hint.startDestroy();
     },
+    destroyAfter(seconds: number) {
+      hint.destroyAfter(seconds);
+    }
   };
 }

@@ -198,11 +198,12 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
         });
         const action = getItemAction(item);
         if (action) {
-            drawShadowedText(ctx, `Press [E] to ${action}`, ctx.width - 50, ctx.height - 128, {
+            drawShadowedText(ctx, `Press [E] to ${action}`, ctx.width / 2, ctx.height - 128, {
                 font: "monospace",
-                size: 13,
-                align: "right" as CanvasTextAlign,
+                size: 24,
+                align: "center" as CanvasTextAlign,
                 baseline: "alphabetic" as CanvasTextBaseline,
+                color: "#88ff88",
             });
         }
     }

@@ -4,6 +4,7 @@ import { NaturalTile } from "./tiles.js";
 import { dropItems, getItemAction, getItemSprite, ItemId } from "./items.js";
 import { getSelectedSlot } from "./ui.js";
 import { smokeSprite, Enemy } from "./enemy.js";
+import { Campfire } from "./placeables.js";
 
 const playerImgs = {
   base: getImage("/assets/entities/player/base.png"),
@@ -16,6 +17,8 @@ const SWING_DURATION = 0.25;
 const SWING_ANGLE = Math.PI / 2; // 90 degrees total arc
 const WATER_DRAIN_RATE = 100 / 300; // depletes fully in 5 minutes
 const HUNGER_DRAIN_RATE = 100 / 600; // depletes fully in 10 minutes
+const STARVE_DAMAGE = 5; // damage taken every interval when starving
+const STARVE_DAMAGE_INTERVAL = 2;
 
 const whiteSilhouettes: { base: HTMLImageElement | null; right: HTMLImageElement | null; left: HTMLImageElement | null } = {
   base: null, right: null, left: null,
@@ -49,6 +52,7 @@ export class Player extends Entity {
   water = 100;
   hunger = 100;
   flashTimer = 0;
+  starveTimer = 0;
   chargingEnemies: Set<Enemy> = new Set();
   private swingTimer = 0;
   private dead = false;
@@ -157,6 +161,14 @@ export class Player extends Entity {
         this.hunger = Math.min(100, this.hunger + 20);
         this.water = Math.max(0, this.water - 20);
         this.takeDamage(10);
+        break;
+      case ItemId.Campfire:
+        const tileX = Math.floor(this.position.x);
+        const tileY = Math.floor(this.position.y);
+        const tile = this.world.getTile(tileX, tileY);
+        if (tile && !tile.solid) {
+          this.world.addEntity(new Campfire(new Vec2(tileX + 0.5, tileY + 0.5), this.world));
+        }
         break;
     }
     this.removeItem(itemId);
@@ -275,23 +287,6 @@ export class Player extends Entity {
   }
 
   update(_dt: number): void {
-    if (!this.keyListenerRegistered) {
-      InputHandler.getInstance().onKey((key, down) => {
-        if (key === "e" && down && !this.dead) this.useSelectedItem();
-      });
-      this.keyListenerRegistered = true;
-    }
-
-    if (this.flashTimer > 0) {
-      this.flashTimer -= _dt;
-    }
-    if (this.swingTimer > 0) {
-      this.swingTimer -= _dt;
-    }
-
-    this.water = Math.max(0, this.water - WATER_DRAIN_RATE * _dt);
-    this.hunger = Math.max(0, this.hunger - HUNGER_DRAIN_RATE * _dt);
-
     if (this.dead) {
       this.respawnTimer -= _dt;
       if (this.respawnTimer <= 0) {
@@ -306,6 +301,31 @@ export class Player extends Entity {
         this.lastWorldGenPos = this.position.clone();
       }
       return;
+    }
+
+    if (!this.keyListenerRegistered) {
+      InputHandler.getInstance().onKey((key, down) => {
+        if (key === "e" && down && !this.dead) this.useSelectedItem();
+      });
+      this.keyListenerRegistered = true;
+    }
+
+    if (this.flashTimer > 0) {
+      this.flashTimer -= _dt;
+    }
+    if (this.swingTimer > 0) {
+      this.swingTimer -= _dt;
+    }
+    if (this.starveTimer > 0) {
+      this.starveTimer -= _dt;
+    }
+
+    this.water = Math.max(0, this.water - WATER_DRAIN_RATE * _dt);
+    this.hunger = Math.max(0, this.hunger - HUNGER_DRAIN_RATE * _dt);
+
+    if ((this.water === 0 || this.hunger === 0) && this.starveTimer <= 0) {
+      this.takeDamage(STARVE_DAMAGE);
+      this.starveTimer = STARVE_DAMAGE_INTERVAL;
     }
 
     // Decay knockback smoothly
