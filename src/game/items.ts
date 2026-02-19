@@ -160,6 +160,7 @@ export class Item extends Entity {
         this.world = world;
         this.startPos = position.clone();
         this.dynamic = true;
+        this.layer = 0.5;
 
         if (popupFrom) {
             this.spawning = true;

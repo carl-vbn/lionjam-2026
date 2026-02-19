@@ -176,7 +176,7 @@ export class Shipwreck extends Entity {
     constructor(position: Vec2, world: World) {
         super(position);
         this.world = world;
-        this.layer = 1;
+        this.layer = 0;
         this.size = new Vec2(8, 8);
     }
 
@@ -229,7 +229,7 @@ export class Shipwreck extends Entity {
                 items[ItemId.MagGlass] = 1;
             }
 
-            dropItems(this.world, this.position, items);
+            dropItems(this.world, this.position.add(new Vec2(0, -2)), items);
 
             if (this.hintHandle) {
                 this.hintHandle.destroy();
@@ -254,6 +254,83 @@ export class Shipwreck extends Entity {
             this.hintHandle = null;
         }
         this.wasHighlighted = this.highlighted;
+    }
+}
+
+const txJet = getImage("/assets/entities/jet.png");
+const txSuitcase = getImage("/assets/entities/suitcase.png");
+
+let txSuitcaseHighlighted: HTMLImageElement = txSuitcase;
+let txSuitcaseSelected: HTMLImageElement = txSuitcase;
+
+createOutlinedImage(txSuitcase, 2, "cyan").then((img) => { txSuitcaseHighlighted = img; });
+createOutlinedImage(txSuitcase, 2, "lime").then((img) => { txSuitcaseSelected = img; });
+
+export class Jetwreck extends Entity {
+    constructor(position: Vec2) {
+        super(position);
+        this.layer = 1;
+        this.size = new Vec2(8, 4);
+    }
+
+    draw(ctx: RenderContext): void {
+        ctx.drawImage(txJet, this.position.x - 4, this.position.y - 6, 8, 8);
+    }
+}
+
+export class Suitcase extends Entity {
+    highlighted = false;
+
+    constructor(position: Vec2) {
+        super(position);
+        this.layer = 1;
+        this.size = new Vec2(1, 1);
+    }
+    
+    draw(ctx: RenderContext): void {
+        // Shadow
+        ctx.fillEllipse(this.position.x, this.position.y - 0.4, 0.5, 0.25, "rgba(0, 0, 0, 0.25)");
+
+        const { worldPos: mousePos } = InputHandler.getInstance().getMousePos();
+        const hovered = Math.abs(mousePos.x - this.position.x) < 0.6 && mousePos.y < this.position.y && mousePos.y > this.position.y - 1;
+
+        let sprite = this.highlighted ? (hovered ? txSuitcaseSelected : txSuitcaseHighlighted) : txSuitcase;
+        ctx.drawImage(sprite, this.position.x - 0.5, this.position.y - 1, 1, 1);
+    }
+
+    update(_dt: number): void {
+        const player = Player.getInstance();
+        const near = player.position.distanceSquaredTo(this.position) < 4;
+        this.highlighted = near;
+    }
+
+    onClick(_worldPos: Vec2): void {
+        if (this.highlighted) {
+            const world = Player.getInstance().world;
+
+            const items: {[key in ItemId]?: number} = {};
+
+            while (Object.keys(items).length < 1) {
+                if (Math.random() < 0.3) {
+                    items[ItemId.MagGlass] = 1;
+                }
+
+                if (Math.random() < 0.3) {
+                    items[ItemId.Pot] = 1;
+                }
+
+                if (Math.random() < 0.3) {
+                    items[ItemId.Rope] = 1;
+                }
+            }
+
+            dropItems(world, this.position, items);
+            world.removeEntity(this);
+        }
+    }
+
+    get clickable(): boolean {
+        return this.highlighted;
     }
 }
 

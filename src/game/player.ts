@@ -50,7 +50,7 @@ export class Player extends Entity {
   inventory: InventorySlot[] = [];
   health = 100;
   water = 100;
-  hunger = 10;
+  hunger = 100;
   flashTimer = 0;
   starveTimer = 0;
   chargingEnemies: Set<Enemy> = new Set();
@@ -98,7 +98,7 @@ export class Player extends Entity {
     for (const slot of this.inventory) {
       items[slot.item] = (items[slot.item] ?? 0) + slot.quantity;
     }
-    dropItems(this.world, this.position, items);
+    dropItems(this._world, this.position, items);
     this.inventory = [];
     this.chargingEnemies.clear();
   }
@@ -173,16 +173,16 @@ export class Player extends Entity {
       case ItemId.Campfire:
         const tileX = Math.floor(this.position.x);
         const tileY = Math.floor(this.position.y);
-        const tile = this.world.getTile(tileX, tileY);
+        const tile = this._world.getTile(tileX, tileY);
         if (tile && !tile.solid) {
-          this.world.addEntity(new Campfire(new Vec2(tileX + 0.5, tileY + 0.5), this.world));
+          this._world.addEntity(new Campfire(new Vec2(tileX + 0.5, tileY + 0.5), this._world));
         }
         break;
     }
     this.removeItem(itemId);
   }
 
-  private world: World;
+  private _world: World;
   private generateSurroundings: (center: Vec2, radius: number) => void;
   private keyListenerRegistered = false;
 
@@ -197,7 +197,7 @@ export class Player extends Entity {
     this.lastWorldGenPos = position.clone();
     this.footsteps = [];
     this.footstepTimer = 0;
-    this.world = world;
+    this._world = world;
     this.generateSurroundings = generateSurroundings;
     this.layer = 1;
     this.dynamic = true;
@@ -348,7 +348,7 @@ export class Player extends Entity {
     const futurePos = this.position.add(totalVelocity.normalized().scale(_dt * 20));
     const tileX = Math.floor(futurePos.x);
     const tileY = Math.floor(futurePos.y);
-    const tile = this.world.getTile(tileX, tileY);
+    const tile = this._world.getTile(tileX, tileY);
     const onWater = tile instanceof NaturalTile && tile.wet;
     if (tile && tile.solid) {
       this.velocity = Vec2.zero();
@@ -402,5 +402,9 @@ export class Player extends Entity {
       this.generateSurroundings(this.position, 12);
       this.lastWorldGenPos = this.position.clone();
     }
+  }
+
+  get world(): World {
+    return this._world;
   }
 }
