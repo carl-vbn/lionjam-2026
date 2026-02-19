@@ -9,6 +9,9 @@ export enum ItemId {
     RawMeat = "meat_raw",
     Spear = "spear",
     Rope = "rope",
+    Axe = "axe",
+    MagGlass = "magglass",
+    Pot = "pot",
 }
 
 export interface WeaponData {
@@ -21,6 +24,7 @@ const WEAPON_DATA: Partial<Record<ItemId, WeaponData>> = {
     [ItemId.Stick]: { damage: 10, range: 3, throwable: false },
     [ItemId.Coconut]: { damage: 7, range: 10, throwable: true },
     [ItemId.Spear]: { damage: 15, range: 8, throwable: true },
+    [ItemId.Axe]: { damage: 20, range: 3, throwable: false },
 };
 
 export function getWeaponData(itemId: ItemId): WeaponData | null {
@@ -34,6 +38,10 @@ const ITEM_SPRITES: Record<ItemId, string> = {
     [ItemId.RawMeat]: "/assets/items/meat_raw.png",
     [ItemId.Spear]: "/assets/items/spear.png",
     [ItemId.Rope]: "/assets/items/rope.png",
+    [ItemId.Axe]: "/assets/items/axe.png",
+    [ItemId.MagGlass]: "/assets/items/magglass.png",
+    [ItemId.Pot]: "/assets/items/pot.png",
+    
 };
 
 interface ItemAssets {

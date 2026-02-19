@@ -164,8 +164,18 @@ export class Shipwreck extends Entity {
             this.looted = true;
             this.flashTimer = 0.2;
 
-            const count = 2 + Math.floor(Math.random() * 4);
-            dropItems(this.world, this.position, { [ItemId.Rope]: count });
+            const ropeCount = 2 + Math.floor(Math.random() * 4);
+            const items: {[key in ItemId]?: number} = { [ItemId.Rope]: ropeCount };
+
+            if (Math.random() < 0.5) {
+                items[ItemId.Pot] = 1;
+            }
+
+            if (Math.random() < 0.2) {
+                items[ItemId.MagGlass] = 1;
+            }
+
+            dropItems(this.world, this.position, items);
 
             if (this.hintHandle) {
                 this.hintHandle.destroy();
