@@ -12,3 +12,4 @@ export { AssetLoader } from "./assets.js";
 export { getImage, createOutlinedImage } from "./image.js";
 export { ParticleEffect, ParticleEffectOptions, ParticleSource, ParticleSystem, extractTextureChunks } from "./particles.js";
 export { GameLoop, createGameLoop } from "./game-loop.js";
+export { attachHint, HintHandle } from "./hint.js";

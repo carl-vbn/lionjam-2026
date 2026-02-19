@@ -1,7 +1,7 @@
 import { Entity, InputHandler, ParticleSystem, RenderContext, Vec2, World } from "../engine/index.js";
 import { createOutlinedImage, createWhiteSilhouette, getImage } from "../engine/image.js";
 import { Player } from "./player.js";
-import { getWeaponData, getItemSprite, ItemId } from "./items.js";
+import { dropItems, getWeaponData, getItemSprite, ItemId } from "./items.js";
 import { getSelectedSlot } from "./ui.js";
 
 // Smoke particle sprite (soft grey circle)
@@ -103,6 +103,7 @@ export class Enemy extends Entity {
                 lifetime: 0.6,
                 speed: 1.5,
             });
+            dropItems(this.world, this.position, { [ItemId.RawMeat]: 1 });
             this.world.removeEntity(this);
         }
     }

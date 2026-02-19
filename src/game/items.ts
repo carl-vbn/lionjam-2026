@@ -5,6 +5,10 @@ import { Player } from "./player.js";
 export enum ItemId {
     Stick = "stick",
     Coconut = "coconut",
+    CookedMeat = "meat_cooked",
+    RawMeat = "meat_raw",
+    Spear = "spear",
+    Rope = "rope",
 }
 
 export interface WeaponData {
@@ -16,6 +20,7 @@ export interface WeaponData {
 const WEAPON_DATA: Partial<Record<ItemId, WeaponData>> = {
     [ItemId.Stick]: { damage: 10, range: 3, throwable: false },
     [ItemId.Coconut]: { damage: 7, range: 10, throwable: true },
+    [ItemId.Spear]: { damage: 15, range: 8, throwable: true },
 };
 
 export function getWeaponData(itemId: ItemId): WeaponData | null {
@@ -25,6 +30,10 @@ export function getWeaponData(itemId: ItemId): WeaponData | null {
 const ITEM_SPRITES: Record<ItemId, string> = {
     [ItemId.Stick]: "/assets/items/stick.png",
     [ItemId.Coconut]: "/assets/items/coconut.png",
+    [ItemId.CookedMeat]: "/assets/items/meat_cooked.png",
+    [ItemId.RawMeat]: "/assets/items/meat_raw.png",
+    [ItemId.Spear]: "/assets/items/spear.png",
+    [ItemId.Rope]: "/assets/items/rope.png",
 };
 
 interface ItemAssets {
@@ -52,6 +61,18 @@ function loadItemAssets(itemId: ItemId): ItemAssets {
 // Pre-load all item sprites
 for (const id of Object.values(ItemId)) {
     loadItemAssets(id);
+}
+
+export function dropItems(world: World, position: Vec2, items: Partial<Record<ItemId, number>>): void {
+    for (const [itemId, count] of Object.entries(items) as [ItemId, number][]) {
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 0.3 + Math.random() * 0.5;
+            const landPos = position.add(new Vec2(Math.cos(angle) * radius, Math.sin(angle) * radius));
+            const item = new Item(landPos, world, itemId, position);
+            world.addEntity(item);
+        }
+    }
 }
 
 const HIGHLIGHT_DISTANCE_SQ = 9; // 3 tiles

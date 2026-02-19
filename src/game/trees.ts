@@ -1,12 +1,13 @@
-import { Entity, Flipbook, InputHandler, ParticleSource, RenderContext, Vec2, World } from "../engine/index.js";
+import { attachHint, Entity, Flipbook, HintHandle, InputHandler, ParticleSource, RenderContext, Vec2, World } from "../engine/index.js";
 import { createWhiteSilhouette, getImage } from "../engine/image.js";
-import { Item, ItemId } from "./items.js";
+import { dropItems, ItemId } from "./items.js";
 import { Player } from "./player.js";
 
 const fpBush = new Flipbook("/assets/entities/bush.png", 2, 0.75);
 const txTallgrassLong = getImage("/assets/entities/tallgrass/long.png");
 const txTallgrassShort = getImage("/assets/entities/tallgrass/short.png");
-const txSpike = getImage("/assets/ui/spike.png");
+
+let shakeHintShown = false;
 
 const palmTreeAssets = {
     normal: new Flipbook("/assets/entities/palmtree/palm.png", 2, 0.75),
@@ -25,6 +26,8 @@ export class PalmTree extends Entity {
     highlighted = false;
     flashTimer = 0;
     private world: World;
+    private hintHandle: HintHandle | null = null;
+    private wasHighlighted = false;
 
     constructor(position: Vec2, hasCoconuts: boolean, world: World) {
         super(position);
@@ -61,19 +64,6 @@ export class PalmTree extends Entity {
             ctx.drawFlipbook(flipbook, this.position.x - 1, this.position.y - 2, 2, 2);
         }
 
-        // UI
-        if (this.highlighted) {
-            ctx.ctx.imageSmoothingEnabled = true;
-            ctx.drawImage(txSpike, this.position.x - 0.125, this.position.y - 2, 0.25, 0.13);
-            ctx.fillRect(this.position.x - 0.5, this.position.y - 2.3, 1, 0.3, "rgba(0, 0, 0, 0.75)");
-            ctx.drawText("Shake", this.position.x, this.position.y - 2.38, {
-                align: "center",
-                baseline: "middle",
-                size: 0.15,
-                color: "white",
-            });
-            ctx.ctx.imageSmoothingEnabled = false;
-        }
     }
 
     onClick(_worldPos: Vec2): void {
@@ -83,13 +73,7 @@ export class PalmTree extends Entity {
 
             // Spawn 1-3 coconut items around the base
             const count = 1 + Math.floor(Math.random() * 3);
-            for (let i = 0; i < count; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const radius = 0.3 + Math.random() * 0.5;
-                const landPos = this.position.add(new Vec2(Math.cos(angle) * radius, Math.sin(angle) * radius));
-                const coconut = new Item(landPos, this.world, ItemId.Coconut, this.position);
-                this.world.addEntity(coconut);
-            }
+            dropItems(this.world, this.position, { [ItemId.Coconut]: count });
         }
     }
 
@@ -102,6 +86,15 @@ export class PalmTree extends Entity {
         }
 
         this.highlighted = this.hasCoconuts && Player.getInstance().position.distanceSquaredTo(this.position) < 16;
+
+        if (this.highlighted && !this.wasHighlighted && !shakeHintShown) {
+            this.hintHandle = attachHint(this, "Shake", this.world);
+            shakeHintShown = true;
+        } else if (!this.highlighted && this.wasHighlighted && this.hintHandle) {
+            this.hintHandle.destroy();
+            this.hintHandle = null;
+        }
+        this.wasHighlighted = this.highlighted;
     }
 }
 

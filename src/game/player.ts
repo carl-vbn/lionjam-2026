@@ -1,7 +1,7 @@
 import { Vec2, Entity, ParticleSystem, RenderContext, InputHandler, World } from "../engine/index.js";
 import { createWhiteSilhouette, getImage } from "../engine/image.js";
 import { NaturalTile } from "./tiles.js";
-import { getItemSprite, Item, ItemId } from "./items.js";
+import { dropItems, getItemSprite, ItemId } from "./items.js";
 import { getSelectedSlot } from "./ui.js";
 import { smokeSprite, Enemy } from "./enemy.js";
 
@@ -86,15 +86,11 @@ export class Player extends Entity {
     });
 
     // Drop all items
+    const items: Partial<Record<ItemId, number>> = {};
     for (const slot of this.inventory) {
-      for (let i = 0; i < slot.quantity; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 0.3 + Math.random() * 0.5;
-        const landPos = this.position.add(new Vec2(Math.cos(angle) * radius, Math.sin(angle) * radius));
-        const item = new Item(landPos, this.world, slot.item, this.position);
-        this.world.addEntity(item);
-      }
+      items[slot.item] = (items[slot.item] ?? 0) + slot.quantity;
     }
+    dropItems(this.world, this.position, items);
     this.inventory = [];
     this.chargingEnemies.clear();
   }
