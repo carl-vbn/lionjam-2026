@@ -93,7 +93,7 @@ export class PalmTree extends Entity {
                 dropItems(this.world, this.position, { [ItemId.Coconut]: coconutCount });
             }
 
-            const logCount = 2 + Math.floor(Math.random() * 4); // 2-5 logs
+            const logCount = 1 + Math.floor(Math.random() * 3); // 1-3 logs
             dropItems(this.world, this.position, { [ItemId.Log]: logCount });
 
             if (this.hintHandle) {
@@ -308,20 +308,18 @@ export class Suitcase extends Entity {
         if (this.highlighted) {
             const world = Player.getInstance().world;
 
+            const possibleItems = [
+                ItemId.MagGlass,
+                ItemId.Pot,
+                ItemId.Rope,
+                ItemId.Waterbottle
+            ]
+            const dropCount = Math.random() < 0.5 ? 2 : 1;
             const items: {[key in ItemId]?: number} = {};
 
-            while (Object.keys(items).length < 1) {
-                if (Math.random() < 0.3) {
-                    items[ItemId.MagGlass] = 1;
-                }
-
-                if (Math.random() < 0.3) {
-                    items[ItemId.Pot] = 1;
-                }
-
-                if (Math.random() < 0.3) {
-                    items[ItemId.Rope] = 1;
-                }
+            for (let i = 0; i<dropCount; i++) {
+                const chosenItem = possibleItems[Math.floor(Math.random() * possibleItems.length)];
+                items[chosenItem] = (items[chosenItem] || 0) + 1;
             }
 
             dropItems(world, this.position, items);
