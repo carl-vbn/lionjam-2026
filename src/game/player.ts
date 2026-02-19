@@ -50,7 +50,7 @@ export class Player extends Entity {
   inventory: InventorySlot[] = [];
   health = 100;
   water = 100;
-  hunger = 100;
+  hunger = 10;
   flashTimer = 0;
   starveTimer = 0;
   chargingEnemies: Set<Enemy> = new Set();
@@ -343,7 +343,7 @@ export class Player extends Entity {
       this.knockbackVelocity = Vec2.zero();
     }
 
-    const totalVelocity = this.velocity.scale(_dt * 10).add(this.knockbackVelocity.scale(_dt));
+    const totalVelocity = this.velocity.scale(_dt * 12 * ((this.hunger + 50) / 150)).add(this.knockbackVelocity.scale(_dt));
     const newPos = this.position.add(totalVelocity);
     const futurePos = this.position.add(totalVelocity.normalized().scale(_dt * 20));
     const tileX = Math.floor(futurePos.x);

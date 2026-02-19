@@ -225,7 +225,7 @@ export class Shipwreck extends Entity {
                 items[ItemId.Pot] = 1;
             }
 
-            if (Math.random() < 0.2) {
+            if (Math.random() < 0.5) {
                 items[ItemId.MagGlass] = 1;
             }
 
