@@ -1,5 +1,5 @@
 import { Camera, createOutlinedImage, getImage, InputHandler, RenderContext, Vec2, World } from "../engine/index.js";
-import { getItemSprite, ItemId } from "./items.js";
+import { getItemDisplayName, getItemSprite, ItemId } from "./items.js";
 import { InventorySlot, Player } from "./player.js";
 
 const txHealthbar = getImage("assets/ui/bars/health.png");
@@ -53,6 +53,18 @@ function drawCompass(ctx: RenderContext, x: number, y: number, size: number, ang
     ctx.pushTransform({center: new Vec2(x, y), rotation: angle});
     ctx.drawImage(txCompassNeedle, x - size / 2, y - size / 2, size, size);
     ctx.popTransform();
+}
+
+function drawShadowedText(ctx: RenderContext, text: string, x: number, y: number, options: {
+    font?: string;
+    size?: number;
+    color?: string;
+    align?: CanvasTextAlign;
+    baseline?: CanvasTextBaseline;
+} = {}) {
+    const shadowOffset = 2;
+    ctx.drawText(text, x + shadowOffset, y + shadowOffset, { ...options, color: "rgba(0, 0, 0, 0.5)" });
+    ctx.drawText(text, x, y, { color: "#ffffff", ...options });
 }
 
 let selectedSlot = -1;
@@ -111,39 +123,30 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
 
     drawCompass(ctx, 80, 80, 128, compassAngle + Math.PI / 2);
 
-    const font = {
-        font: "monospace",
-        color: "#ffffff",
-        baseline: "alphabetic" as CanvasTextBaseline,
-        align: "left" as CanvasTextAlign,
-        size: 16,
-    };
+    const textOpts = { font: "monospace", size: 16, baseline: "alphabetic" as CanvasTextBaseline, align: "left" as CanvasTextAlign };
 
-    const shadowFont = {
-        ...font,
-        color: "rgba(0, 0, 0, 0.5)",
-    };
-
-    ctx.drawText(`X: ${player.position.x.toFixed(1)}`, 152, 42, shadowFont);
-    ctx.drawText(`X: ${player.position.x.toFixed(1)}`, 150, 40, font);
-
-    ctx.drawText(`Y: ${player.position.y.toFixed(1)}`, 152, 62, shadowFont);
-    ctx.drawText(`Y: ${player.position.y.toFixed(1)}`, 150, 60, font);
-
-    ctx.drawText(`FPS: ${Math.round(fps)}`, 152, 82, shadowFont);
-    ctx.drawText(`FPS: ${Math.round(fps)}`, 150, 80, font);
-
-    ctx.drawText(`Tracking: crash site`, 152, 102, shadowFont);
-    ctx.drawText(`Tracking: crash site`, 150, 100, font);
-
-    ctx.drawText(`(X: ${target.x.toFixed(1)}, Y: ${target.y.toFixed(1)})`, 152, 122, shadowFont);
-    ctx.drawText(`(X: ${target.x.toFixed(1)}, Y: ${target.y.toFixed(1)})`, 150, 120, font);
+    drawShadowedText(ctx, `X: ${player.position.x.toFixed(1)}`, 150, 40, textOpts);
+    drawShadowedText(ctx, `Y: ${player.position.y.toFixed(1)}`, 150, 60, textOpts);
+    drawShadowedText(ctx, `FPS: ${Math.round(fps)}`, 150, 80, textOpts);
+    drawShadowedText(ctx, `Tracking: crash site`, 150, 100, textOpts);
+    drawShadowedText(ctx, `(X: ${target.x.toFixed(1)}, Y: ${target.y.toFixed(1)})`, 150, 120, textOpts);
 
     const { screenPos: mousePos } = InputHandler.getInstance()!.getMousePos();
-    
+
     for (let i = 0; i < player.inventory.length; i++) {
         let j = player.inventory.length - 1 - i; // reverse order for right-to-left
         const slotHovered = mousePos.x >= ctx.width - 100 - j * 68 && mousePos.x <= ctx.width - 36 - j * 68 && mousePos.y >= ctx.height - 94 && mousePos.y <= ctx.height - 30;
         drawInventorySlot(ctx, ctx.width - 100 - j * 68, ctx.height - 94, player.inventory[i], slotHovered, i === selectedSlot);
+    }
+
+    // Display held item name above inventory
+    if (selectedSlot >= 0 && selectedSlot < player.inventory.length) {
+        const name = getItemDisplayName(player.inventory[selectedSlot].item);
+        drawShadowedText(ctx, name, ctx.width - 50, ctx.height - 110, {
+            font: "monospace",
+            size: 14,
+            align: "right" as CanvasTextAlign,
+            baseline: "alphabetic" as CanvasTextBaseline,
+        });
     }
 }

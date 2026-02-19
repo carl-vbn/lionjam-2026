@@ -125,6 +125,15 @@ export class Enemy extends Entity {
 
         if (info.weapon.throwable) {
             player.removeItem(info.itemId);
+
+            // If that was the last of this item, auto-select another weapon
+            const slot = getSelectedSlot();
+            const stillValid = slot >= 0 && slot < player.inventory.length && getWeaponData(player.inventory[slot].item) !== null;
+            if (!stillValid) {
+                const weaponIndex = player.inventory.findIndex(s => getWeaponData(s.item) !== null);
+                setSelectedSlot(weaponIndex >= 0 ? weaponIndex : -1);
+            }
+
             const projectile = new Projectile(
                 player.position.clone(),
                 this,
