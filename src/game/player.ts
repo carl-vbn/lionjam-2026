@@ -141,6 +141,14 @@ export class Player extends Entity {
     }
   }
 
+  isHolding(itemId: ItemId): boolean {
+    if (this.dead) return false;
+    
+    const slot = getSelectedSlot();
+    if (slot < 0 || slot >= this.inventory.length) return false;
+    return this.inventory[slot].item === itemId;
+  }
+
   private useSelectedItem(): void {
     const slot = getSelectedSlot();
     if (slot < 0 || slot >= this.inventory.length) return;
