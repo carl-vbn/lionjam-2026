@@ -31,7 +31,7 @@ export function generateTile(world: World, x: number, y: number): NaturalTile | 
     }
 
     // Shipwreck spawning (water/sand boundary, y > 0)
-    if (Math.abs(x) > 20 && y > 0 && Math.random() < 0.005) {
+    if (Math.abs(x) > 0 && y > 0 && Math.random() < 0.01) {
         const d00 = dryness;
         const d10 = getDryness(x + 1, y);
         const d01 = getDryness(x, y + 1);

@@ -155,7 +155,7 @@ export class World {
       const ex = entity.position.x - entity.size.x / 2;
       const ey = entity.position.y - entity.size.y / 2;
       if (ex + entity.size.x >= bounds.minX && ex <= bounds.maxX &&
-          ey + entity.size.y >= bounds.minY && ey <= bounds.maxY) {
+          ey + entity.size.y * 2 >= bounds.minY && ey - entity.size.y <= bounds.maxY) {
         entity.draw(ctx);
       }
     }

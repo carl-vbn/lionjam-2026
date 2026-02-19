@@ -50,6 +50,16 @@ export function getItemDisplayName(itemId: ItemId): string {
     return ITEM_DISPLAY_NAMES[itemId];
 }
 
+export interface Recipe {
+    result: ItemId;
+    ingredients: Partial<Record<ItemId, number>>;
+}
+
+export const RECIPES: Recipe[] = [
+    { result: ItemId.Spear, ingredients: { [ItemId.Stick]: 3, [ItemId.Rope]: 1 } },
+    { result: ItemId.Axe, ingredients: { [ItemId.Stick]: 2, [ItemId.Rope]: 2, [ItemId.Rock]: 1 } },
+];
+
 const ITEM_SPRITES: Record<ItemId, string> = {
     [ItemId.Stick]: "/assets/items/stick.png",
     [ItemId.Coconut]: "/assets/items/coconut.png",

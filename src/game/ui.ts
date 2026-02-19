@@ -1,5 +1,5 @@
 import { Camera, createOutlinedImage, getImage, InputHandler, RenderContext, Vec2, World } from "../engine/index.js";
-import { getItemDisplayName, getItemSprite, ItemId } from "./items.js";
+import { getItemDisplayName, getItemSprite, ItemId, Recipe, RECIPES } from "./items.js";
 import { InventorySlot, Player } from "./player.js";
 
 const txHealthbar = getImage("assets/ui/bars/health.png");
@@ -8,6 +8,7 @@ const txFoodbar = getImage("assets/ui/bars/food.png");
 const txCompassBg = getImage("assets/ui/compass/background.png");
 const txCompassNeedle = getImage("assets/ui/compass/needle.png");
 const txInventorySlot = getImage("assets/ui/slot.png");
+const txButton = getImage("assets/ui/button.png");
 
 let txInventorySlotSelected = txInventorySlot;
 createOutlinedImage(txInventorySlot, 2, "cyan").then((outlined) => {
@@ -44,6 +45,18 @@ function drawInventorySlot(ctx: RenderContext, x: number, y: number, slot: Inven
     });
 }
 
+function drawCraftingButton(ctx: RenderContext, x: number, y: number, item: ItemId, hovered: boolean, disabled: boolean) {
+    ctx.drawImage(txButton, x, y, 64, 64);
+    const itemSprite = getItemSprite(item);
+    ctx.drawImage(itemSprite, x + 8, y + 8, 48, 48);
+
+    if (disabled)
+        ctx.fillRect(x + 5, y + 4, 55, 56, "rgba(50, 50, 50, 0.5)");
+
+    else if (hovered)
+        ctx.fillRect(x + 2, y + 2, 55, 56, "rgba(0, 0, 0, 0.1)");
+}
+
 function drawCompass(ctx: RenderContext, x: number, y: number, size: number, angle: number) {
     // Shadow
     ctx.fillEllipse(x + 2, y + 2, size / 2, size / 2, "rgba(0, 0, 0, 0.25)");
@@ -77,12 +90,42 @@ export function setSelectedSlot(index: number): void {
     selectedSlot = index;
 }
 
+function canCraftRecipe(recipe: Recipe, player: Player): boolean {
+    for (const [itemId, needed] of Object.entries(recipe.ingredients) as [ItemId, number][]) {
+        const slot = player.inventory.find(s => s.item === itemId);
+        if (!slot || slot.quantity < needed) return false;
+    }
+    return true;
+}
+
+function getItemCount(player: Player, itemId: ItemId): number {
+    const slot = player.inventory.find(s => s.item === itemId);
+    return slot ? slot.quantity : 0;
+}
+
 /**
  * Checks if a screen-space click lands on a UI element.
  * Returns true if the click was absorbed by UI (should not propagate to the world).
  */
 export function handleUIClick(screenPos: Vec2, screenWidth: number, screenHeight: number): boolean {
     const player = Player.getInstance();
+
+    // Check crafting buttons
+    for (let i = 0; i < RECIPES.length; i++) {
+        const btnX = 30 + i * 70;
+        const btnY = screenHeight - 94;
+        if (screenPos.x >= btnX && screenPos.x <= btnX + 64 &&
+            screenPos.y >= btnY && screenPos.y <= btnY + 64) {
+            const recipe = RECIPES[i];
+            if (canCraftRecipe(recipe, player)) {
+                for (const [itemId, needed] of Object.entries(recipe.ingredients) as [ItemId, number][]) {
+                    player.removeItem(itemId, needed);
+                }
+                player.addItem(recipe.result);
+            }
+            return true;
+        }
+    }
 
     // Check inventory slots
     for (let i = 0; i < player.inventory.length; i++) {
@@ -148,5 +191,34 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
             align: "right" as CanvasTextAlign,
             baseline: "alphabetic" as CanvasTextBaseline,
         });
+    }
+
+    // Draw crafting buttons
+    for (let i = 0; i < RECIPES.length; i++) {
+        const recipe = RECIPES[i];
+        const btnX = 30 + i * 70;
+        const btnY = ctx.height - 94;
+        const canCraft = canCraftRecipe(recipe, player);
+        const hovered = mousePos.x >= btnX && mousePos.x <= btnX + 64 && mousePos.y >= btnY && mousePos.y <= btnY + 64;
+
+        drawCraftingButton(ctx, btnX, btnY, recipe.result, hovered, !canCraft);
+
+        // Tooltip on hover
+        if (hovered) {
+            const ingredients = Object.entries(recipe.ingredients) as [ItemId, number][];
+            for (let j = 0; j < ingredients.length; j++) {
+                const [itemId, needed] = ingredients[j];
+                const have = getItemCount(player, itemId);
+                const color = have >= needed ? "#ffffff" : "#ff4444";
+                const lineY = btnY - 20 - j * 18;
+                drawShadowedText(ctx, `${needed}x ${getItemDisplayName(itemId)}`, btnX, lineY, {
+                    font: "monospace",
+                    size: 13,
+                    color,
+                    align: "left" as CanvasTextAlign,
+                    baseline: "alphabetic" as CanvasTextBaseline,
+                });
+            }
+        }
     }
 }
