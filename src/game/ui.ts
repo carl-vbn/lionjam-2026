@@ -1,5 +1,5 @@
 import { Camera, createOutlinedImage, getImage, InputHandler, RenderContext, Vec2, World } from "../engine/index.js";
-import { getItemDisplayName, getItemSprite, ItemId, Recipe, RECIPES } from "./items.js";
+import { getItemAction, getItemDisplayName, getItemSprite, ItemId, Recipe, RECIPES } from "./items.js";
 import { InventorySlot, Player } from "./player.js";
 
 const txHealthbar = getImage("assets/ui/bars/health.png");
@@ -117,9 +117,12 @@ export function handleUIClick(screenPos: Vec2, screenWidth: number, screenHeight
         if (screenPos.x >= btnX && screenPos.x <= btnX + 64 &&
             screenPos.y >= btnY && screenPos.y <= btnY + 64) {
             const recipe = RECIPES[i];
-            if (canCraftRecipe(recipe, player)) {
-                for (const [itemId, needed] of Object.entries(recipe.ingredients) as [ItemId, number][]) {
-                    player.removeItem(itemId, needed);
+            const debugMode = InputHandler.getInstance().isKeyDown("m");
+            if (debugMode || canCraftRecipe(recipe, player)) {
+                if (!debugMode) {
+                    for (const [itemId, needed] of Object.entries(recipe.ingredients) as [ItemId, number][]) {
+                        player.removeItem(itemId, needed);
+                    }
                 }
                 player.addItem(recipe.result);
             }
@@ -129,7 +132,8 @@ export function handleUIClick(screenPos: Vec2, screenWidth: number, screenHeight
 
     // Check inventory slots
     for (let i = 0; i < player.inventory.length; i++) {
-        const slotX = screenWidth - 100 - i * 68;
+        const j = player.inventory.length - 1 - i;
+        const slotX = screenWidth - 100 - j * 68;
         const slotY = screenHeight - 94;
         if (screenPos.x >= slotX && screenPos.x <= slotX + 64 &&
             screenPos.y >= slotY && screenPos.y <= slotY + 64) {
@@ -159,8 +163,8 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
     const player = Player.getInstance()!;
 
     drawBar(ctx, ctx.width - 380, 30, txHealthbar, "#ff0000", player.health / 100);
-    drawBar(ctx, ctx.width - 380, 80, txWaterbar, "#0088ff", 0.75);
-    drawBar(ctx, ctx.width - 380, 130, txFoodbar, "#ff8800", 0.5);
+    drawBar(ctx, ctx.width - 380, 80, txWaterbar, "#0088ff", player.water / 100);
+    drawBar(ctx, ctx.width - 380, 130, txFoodbar, "#ff8800", player.hunger / 100);
 
     const compassAngle = Math.atan2(target.y - player.position.y, target.x - player.position.x);
 
@@ -184,13 +188,23 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
 
     // Display held item name above inventory
     if (selectedSlot >= 0 && selectedSlot < player.inventory.length) {
-        const name = getItemDisplayName(player.inventory[selectedSlot].item);
+        const item = player.inventory[selectedSlot].item;
+        const name = getItemDisplayName(item);
         drawShadowedText(ctx, name, ctx.width - 50, ctx.height - 110, {
             font: "monospace",
             size: 14,
             align: "right" as CanvasTextAlign,
             baseline: "alphabetic" as CanvasTextBaseline,
         });
+        const action = getItemAction(item);
+        if (action) {
+            drawShadowedText(ctx, `Press [E] to ${action}`, ctx.width - 50, ctx.height - 128, {
+                font: "monospace",
+                size: 13,
+                align: "right" as CanvasTextAlign,
+                baseline: "alphabetic" as CanvasTextBaseline,
+            });
+        }
     }
 
     // Draw crafting buttons

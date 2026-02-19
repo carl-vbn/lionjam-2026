@@ -1,7 +1,7 @@
 import { Vec2, Entity, ParticleSystem, RenderContext, InputHandler, World } from "../engine/index.js";
 import { createWhiteSilhouette, getImage } from "../engine/image.js";
 import { NaturalTile } from "./tiles.js";
-import { dropItems, getItemSprite, ItemId } from "./items.js";
+import { dropItems, getItemAction, getItemSprite, ItemId } from "./items.js";
 import { getSelectedSlot } from "./ui.js";
 import { smokeSprite, Enemy } from "./enemy.js";
 
@@ -14,6 +14,8 @@ const playerImgs = {
 
 const SWING_DURATION = 0.25;
 const SWING_ANGLE = Math.PI / 2; // 90 degrees total arc
+const WATER_DRAIN_RATE = 100 / 300; // depletes fully in 5 minutes
+const HUNGER_DRAIN_RATE = 100 / 600; // depletes fully in 10 minutes
 
 const whiteSilhouettes: { base: HTMLImageElement | null; right: HTMLImageElement | null; left: HTMLImageElement | null } = {
   base: null, right: null, left: null,
@@ -44,6 +46,8 @@ export class Player extends Entity {
   footstepTimer: number;
   inventory: InventorySlot[] = [];
   health = 100;
+  water = 100;
+  hunger = 100;
   flashTimer = 0;
   chargingEnemies: Set<Enemy> = new Set();
   private swingTimer = 0;
@@ -133,8 +137,34 @@ export class Player extends Entity {
     }
   }
 
+  private useSelectedItem(): void {
+    const slot = getSelectedSlot();
+    if (slot < 0 || slot >= this.inventory.length) return;
+    const itemId = this.inventory[slot].item;
+    const action = getItemAction(itemId);
+    if (!action) return;
+
+    switch (itemId) {
+      case ItemId.Coconut:
+        this.water = Math.min(100, this.water + 40);
+        this.hunger = Math.min(100, this.hunger + 10);
+        break;
+      case ItemId.CookedMeat:
+        this.hunger = Math.min(100, this.hunger + 40);
+        this.water = Math.max(0, this.water - 5);
+        break;
+      case ItemId.RawMeat:
+        this.hunger = Math.min(100, this.hunger + 20);
+        this.water = Math.max(0, this.water - 20);
+        this.takeDamage(10);
+        break;
+    }
+    this.removeItem(itemId);
+  }
+
   private world: World;
   private generateSurroundings: (center: Vec2, radius: number) => void;
+  private keyListenerRegistered = false;
 
   constructor(
     position: Vec2,
@@ -245,6 +275,13 @@ export class Player extends Entity {
   }
 
   update(_dt: number): void {
+    if (!this.keyListenerRegistered) {
+      InputHandler.getInstance().onKey((key, down) => {
+        if (key === "e" && down && !this.dead) this.useSelectedItem();
+      });
+      this.keyListenerRegistered = true;
+    }
+
     if (this.flashTimer > 0) {
       this.flashTimer -= _dt;
     }
@@ -252,12 +289,17 @@ export class Player extends Entity {
       this.swingTimer -= _dt;
     }
 
+    this.water = Math.max(0, this.water - WATER_DRAIN_RATE * _dt);
+    this.hunger = Math.max(0, this.hunger - HUNGER_DRAIN_RATE * _dt);
+
     if (this.dead) {
       this.respawnTimer -= _dt;
       if (this.respawnTimer <= 0) {
         this.dead = false;
         this.position = Vec2.zero();
         this.health = 50;
+        this.water = 100;
+        this.hunger = 100;
         this.velocity = Vec2.zero();
         this.knockbackVelocity = Vec2.zero();
         this.generateSurroundings(this.position, 12);

@@ -1,7 +1,8 @@
-import { attachHint, Entity, Flipbook, HintHandle, InputHandler, ParticleSource, RenderContext, Vec2, World } from "../engine/index.js";
+import { attachHint, Entity, Flipbook, HintHandle, InputHandler, ParticleSource, ParticleSystem, RenderContext, Vec2, World } from "../engine/index.js";
 import { createOutlinedImage, createWhiteSilhouette, getImage } from "../engine/image.js";
 import { dropItems, ItemId } from "./items.js";
 import { Player } from "./player.js";
+import { getSelectedSlot } from "./ui.js";
 
 const fpBush = new Flipbook("/assets/entities/bush.png", 2, 0.75);
 const txTallgrassLong = getImage("/assets/entities/tallgrass/long.png");
@@ -9,9 +10,12 @@ const txTallgrassShort = getImage("/assets/entities/tallgrass/short.png");
 
 let shakeHintShown = false;
 let lootHintShown = false;
+let chopHintShown = false;
 
 const palmTreeAssets = {
     normal: new Flipbook("/assets/entities/palmtree/palm.png", 2, 0.75),
+    normalHighlighted: new Flipbook("/assets/entities/palmtree/palm.png", 2, 0.75, { width: 2, color: "cyan" }),
+    normalSelected: new Flipbook("/assets/entities/palmtree/palm.png", 2, 0.75, { width: 2, color: "lime" }),
     coconuts: new Flipbook("/assets/entities/palmtree/palmcoconut.png", 2, 0.75),
     coconutsHighlighted: new Flipbook("/assets/entities/palmtree/palmcoconut.png", 2, 0.75, { width: 2, color: "cyan" }),
     coconutsSelected: new Flipbook("/assets/entities/palmtree/palmcoconut.png", 2, 0.75, { width: 2, color: "lime" }),
@@ -25,10 +29,11 @@ createWhiteSilhouette(getImage("/assets/entities/palmtree/palm.png")).then((silh
 export class PalmTree extends Entity {
     hasCoconuts = false;
     highlighted = false;
+    chopHighlighted = false;
+    destroyed = false;
     flashTimer = 0;
     private world: World;
     private hintHandle: HintHandle | null = null;
-    private wasHighlighted = false;
 
     constructor(position: Vec2, hasCoconuts: boolean, world: World) {
         super(position);
@@ -39,7 +44,7 @@ export class PalmTree extends Entity {
     }
 
     get clickable(): boolean {
-        return this.hasCoconuts && this.highlighted;
+        return this.highlighted || this.chopHighlighted;
     }
 
     getParticleSource(): ParticleSource | null {
@@ -51,6 +56,8 @@ export class PalmTree extends Entity {
     }
 
     draw(ctx: RenderContext): void {
+        if (this.destroyed) return;
+
         // Shadow
         ctx.fillEllipse(this.position.x, this.position.y - 0.25, 0.5, 0.25, "rgba(0, 0, 0, 0.25)");
 
@@ -58,17 +65,43 @@ export class PalmTree extends Entity {
             ctx.drawImageRegion(palmTreeAssets.silhouette, 0, 0, palmTreeAssets.silhouette.naturalWidth / 2, palmTreeAssets.silhouette.naturalHeight, this.position.x - 1, this.position.y - 2, 2, 2);
         } else {
             const { worldPos: mousePos } = InputHandler.getInstance().getMousePos();
+            const hovered = Math.abs(mousePos.x - this.position.x) < 0.6 && mousePos.y < this.position.y && mousePos.y > this.position.y - 2;
 
-            let hovered = Math.abs(mousePos.x - this.position.x) < 0.6 && mousePos.y < this.position.y && mousePos.y > this.position.y - 2;
-
-            const flipbook = this.highlighted ? hovered ? palmTreeAssets.coconutsSelected : palmTreeAssets.coconutsHighlighted : this.hasCoconuts ? palmTreeAssets.coconuts : palmTreeAssets.normal;
+            let flipbook;
+            if (this.chopHighlighted) {
+                if (this.hasCoconuts) {
+                    flipbook = hovered ? palmTreeAssets.coconutsSelected : palmTreeAssets.coconutsHighlighted;
+                } else {
+                    flipbook = hovered ? palmTreeAssets.normalSelected : palmTreeAssets.normalHighlighted;
+                }
+            } else {
+                flipbook = this.highlighted
+                    ? hovered ? palmTreeAssets.coconutsSelected : palmTreeAssets.coconutsHighlighted
+                    : this.hasCoconuts ? palmTreeAssets.coconuts : palmTreeAssets.normal;
+            }
             ctx.drawFlipbook(flipbook, this.position.x - 1, this.position.y - 2, 2, 2);
         }
 
     }
 
     onClick(_worldPos: Vec2): void {
-        if (this.hasCoconuts && this.highlighted) {
+        if (this.chopHighlighted) {
+            this.flashTimer = 0.2;
+
+            if (this.hasCoconuts) {
+                const coconutCount = 1 + Math.floor(Math.random() * 3);
+                dropItems(this.world, this.position, { [ItemId.Coconut]: coconutCount });
+            }
+
+            const logCount = 2 + Math.floor(Math.random() * 4); // 2-5 logs
+            dropItems(this.world, this.position, { [ItemId.Log]: logCount });
+
+            if (this.hintHandle) {
+                this.hintHandle.destroy();
+                this.hintHandle = null;
+            }
+            this.destroyed = true;
+        } else if (this.hasCoconuts && this.highlighted) {
             this.hasCoconuts = false;
             this.flashTimer = 0.2;
 
@@ -79,23 +112,44 @@ export class PalmTree extends Entity {
     }
 
     update(dt: number): void {
-        if (this.flashTimer > 0) {
-            this.flashTimer -= dt;
-            if (this.flashTimer < 0) {
-                this.flashTimer = 0;
-            }
+        if (this.destroyed) {
+            this.world.removeEntity(this);
+            return;
         }
 
-        this.highlighted = this.hasCoconuts && Player.getInstance().position.distanceSquaredTo(this.position) < 16;
+        if (this.flashTimer > 0) {
+            this.flashTimer -= dt;
+            if (this.flashTimer < 0) this.flashTimer = 0;
+        }
 
-        if (this.highlighted && !this.wasHighlighted && !shakeHintShown) {
+        const player = Player.getInstance();
+        const near = player.position.distanceSquaredTo(this.position) < 16;
+        const slot = getSelectedSlot();
+        const holdingAxe = near && slot >= 0 && slot < player.inventory.length && player.inventory[slot].item === ItemId.Axe;
+
+        const prevChopHighlighted = this.chopHighlighted;
+        const prevHighlighted = this.highlighted;
+
+        this.chopHighlighted = holdingAxe;
+        this.highlighted = near && this.hasCoconuts && !holdingAxe;
+
+        const anyHighlighted = this.highlighted || this.chopHighlighted;
+        const prevAnyHighlighted = prevHighlighted || prevChopHighlighted;
+
+        if (this.chopHighlighted && !prevChopHighlighted) {
+            if (this.hintHandle) { this.hintHandle.destroy(); this.hintHandle = null; }
+            if (!chopHintShown) {
+                this.hintHandle = attachHint(this, "Chop", this.world);
+                chopHintShown = true;
+            }
+        } else if (this.highlighted && !prevHighlighted && !shakeHintShown) {
             this.hintHandle = attachHint(this, "Shake", this.world);
             shakeHintShown = true;
-        } else if (!this.highlighted && this.wasHighlighted && this.hintHandle) {
+        } else if (!anyHighlighted && prevAnyHighlighted && this.hintHandle) {
             this.hintHandle.destroy();
             this.hintHandle = null;
         }
-        this.wasHighlighted = this.highlighted;
+
     }
 }
 

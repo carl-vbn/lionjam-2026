@@ -12,7 +12,8 @@ export enum ItemId {
     Axe = "axe",
     MagGlass = "magglass",
     Pot = "pot",
-    Rock = "rock"
+    Rock = "rock",
+    Log = "log"
 }
 
 export interface WeaponData {
@@ -22,7 +23,7 @@ export interface WeaponData {
 }
 
 const WEAPON_DATA: Partial<Record<ItemId, WeaponData>> = {
-    [ItemId.Stick]: { damage: 10, range: 3, throwable: false },
+    [ItemId.Stick]: { damage: 10, range: 2, throwable: false },
     [ItemId.Coconut]: { damage: 5, range:8, throwable: true },
     [ItemId.Spear]: { damage: 15, range: 8, throwable: true },
     [ItemId.Axe]: { damage: 20, range: 3, throwable: false },
@@ -44,10 +45,21 @@ const ITEM_DISPLAY_NAMES: Record<ItemId, string> = {
     [ItemId.MagGlass]: "Magnifying Glass",
     [ItemId.Pot]: "Pot",
     [ItemId.Rock]: "Rock",
+    [ItemId.Log]: "Log"
 };
 
 export function getItemDisplayName(itemId: ItemId): string {
     return ITEM_DISPLAY_NAMES[itemId];
+}
+
+const ITEM_ACTIONS: Partial<Record<ItemId, string>> = {
+    [ItemId.Coconut]: "consume",
+    [ItemId.RawMeat]: "consume",
+    [ItemId.CookedMeat]: "consume",
+};
+
+export function getItemAction(itemId: ItemId): string | null {
+    return ITEM_ACTIONS[itemId] ?? null;
 }
 
 export interface Recipe {
@@ -70,7 +82,8 @@ const ITEM_SPRITES: Record<ItemId, string> = {
     [ItemId.Axe]: "/assets/items/axe.png",
     [ItemId.MagGlass]: "/assets/items/magglass.png",
     [ItemId.Pot]: "/assets/items/pot.png",
-    [ItemId.Rock]: "/assets/items/rock.png"
+    [ItemId.Rock]: "/assets/items/rock.png",
+    [ItemId.Log]: "/assets/items/log.png"
 };
 
 interface ItemAssets {
