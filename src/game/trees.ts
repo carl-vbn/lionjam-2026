@@ -1,5 +1,5 @@
 import { attachHint, Entity, Flipbook, HintHandle, InputHandler, ParticleSource, RenderContext, Vec2, World } from "../engine/index.js";
-import { createWhiteSilhouette, getImage } from "../engine/image.js";
+import { createOutlinedImage, createWhiteSilhouette, getImage } from "../engine/image.js";
 import { dropItems, ItemId } from "./items.js";
 import { Player } from "./player.js";
 
@@ -8,6 +8,7 @@ const txTallgrassLong = getImage("/assets/entities/tallgrass/long.png");
 const txTallgrassShort = getImage("/assets/entities/tallgrass/short.png");
 
 let shakeHintShown = false;
+let lootHintShown = false;
 
 const palmTreeAssets = {
     normal: new Flipbook("/assets/entities/palmtree/palm.png", 2, 0.75),
@@ -90,6 +91,100 @@ export class PalmTree extends Entity {
         if (this.highlighted && !this.wasHighlighted && !shakeHintShown) {
             this.hintHandle = attachHint(this, "Shake", this.world);
             shakeHintShown = true;
+        } else if (!this.highlighted && this.wasHighlighted && this.hintHandle) {
+            this.hintHandle.destroy();
+            this.hintHandle = null;
+        }
+        this.wasHighlighted = this.highlighted;
+    }
+}
+
+const txShipwreck = getImage("/assets/entities/shipwreck.png");
+const txShipwreckLooted = getImage("/assets/entities/shipwreck_looted.png");
+const shipwreckAssets: {
+    highlighted: HTMLImageElement | null;
+    selected: HTMLImageElement | null;
+    silhouette: HTMLImageElement | null;
+} = { highlighted: null, selected: null, silhouette: null };
+
+createOutlinedImage(txShipwreck, 2, "cyan").then((img) => { shipwreckAssets.highlighted = img; });
+createOutlinedImage(txShipwreck, 2, "lime").then((img) => { shipwreckAssets.selected = img; });
+createWhiteSilhouette(txShipwreck).then((img) => { shipwreckAssets.silhouette = img; });
+
+export class Shipwreck extends Entity {
+    private world: World;
+    private looted = false;
+    private highlighted = false;
+    private flashTimer = 0;
+    private hintHandle: HintHandle | null = null;
+    private wasHighlighted = false;
+
+    constructor(position: Vec2, world: World) {
+        super(position);
+        this.world = world;
+        this.layer = 1;
+        this.size = new Vec2(8, 8);
+    }
+
+    get clickable(): boolean {
+        return !this.looted && this.highlighted;
+    }
+
+    getParticleSource(): ParticleSource | null {
+        if (!txShipwreck.naturalWidth) return null;
+        return { image: txShipwreck, sx: 0, sy: 0, sw: txShipwreck.naturalWidth, sh: txShipwreck.naturalHeight };
+    }
+
+    draw(ctx: RenderContext): void {
+        let drawW = 8;
+        let drawH = 8;
+        let drawX = this.position.x - 4;
+        let drawY = this.position.y - 8;
+        if (this.flashTimer > 0 && shipwreckAssets.silhouette) {
+            ctx.drawImage(shipwreckAssets.silhouette, drawX, drawY, drawW, drawH);
+        } else if (this.looted) {
+            ctx.drawImage(txShipwreckLooted, drawX, drawY, drawW, drawH);
+        } else {
+            const { worldPos: mousePos } = InputHandler.getInstance().getMousePos();
+            const hovered = Math.abs(mousePos.x - this.position.x) < 4 && mousePos.y < this.position.y && mousePos.y > this.position.y - 8;
+
+            let sprite: HTMLImageElement = txShipwreck;
+            if (this.highlighted && hovered && shipwreckAssets.selected) {
+                sprite = shipwreckAssets.selected;
+            } else if (this.highlighted && shipwreckAssets.highlighted) {
+                sprite = shipwreckAssets.highlighted;
+            }
+
+            ctx.drawImage(sprite, drawX, drawY, drawW, drawH);
+        }
+    }
+
+    onClick(_worldPos: Vec2): void {
+        if (!this.looted && this.highlighted) {
+            this.looted = true;
+            this.flashTimer = 0.2;
+
+            const count = 2 + Math.floor(Math.random() * 4);
+            dropItems(this.world, this.position, { [ItemId.Rope]: count });
+
+            if (this.hintHandle) {
+                this.hintHandle.destroy();
+                this.hintHandle = null;
+            }
+        }
+    }
+
+    update(dt: number): void {
+        if (this.flashTimer > 0) {
+            this.flashTimer -= dt;
+            if (this.flashTimer < 0) this.flashTimer = 0;
+        }
+
+        this.highlighted = !this.looted && Player.getInstance().position.distanceSquaredTo(this.position) < 25;
+
+        if (this.highlighted && !this.wasHighlighted && !lootHintShown) {
+            this.hintHandle = attachHint(this, "Loot", this.world, new Vec2(0, -2));
+            lootHintShown = true;
         } else if (!this.highlighted && this.wasHighlighted && this.hintHandle) {
             this.hintHandle.destroy();
             this.hintHandle = null;

@@ -77,7 +77,7 @@ class HintEntity extends Entity {
 
     // Hint is drawn above the host entity. The spike sits at the top of the entity,
     // and the dark rect + text sit above that.
-    const baseY = this.position.y - 2; // top of a 2-tall entity
+    const baseY = this.position.y - 2;
     const spikeY = baseY + bob;
     const rectY = baseY - 0.3 + bob;
 

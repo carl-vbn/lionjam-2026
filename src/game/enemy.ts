@@ -1,8 +1,10 @@
-import { Entity, InputHandler, ParticleSystem, RenderContext, Vec2, World } from "../engine/index.js";
+import { attachHint, Entity, HintHandle, InputHandler, ParticleSystem, RenderContext, Vec2, World } from "../engine/index.js";
 import { createOutlinedImage, createWhiteSilhouette, getImage } from "../engine/image.js";
 import { Player } from "./player.js";
 import { dropItems, getWeaponData, getItemSprite, ItemId } from "./items.js";
-import { getSelectedSlot } from "./ui.js";
+import { getSelectedSlot, setSelectedSlot } from "./ui.js";
+
+let attackHintShown = false;
 
 // Smoke particle sprite (soft grey circle)
 export const smokeSprite = (() => {
@@ -69,6 +71,7 @@ export class Enemy extends Entity {
     private velocity = Vec2.zero();
     private wanderTarget: Vec2;
     private impactCooldown = 0;
+    private hintHandle: HintHandle | null = null;
 
     constructor(position: Vec2, world: World) {
         super(position);
@@ -95,6 +98,10 @@ export class Enemy extends Entity {
 
         if (this.health <= 0) {
             Player.getInstance().chargingEnemies.delete(this);
+            if (this.hintHandle) {
+                this.hintHandle.destroy();
+                this.hintHandle = null;
+            }
             ParticleSystem.getInstance().spawn({
                 sprite: smokeSprite,
                 count: 10,
@@ -165,6 +172,27 @@ export class Enemy extends Entity {
             if (!this.attacking) {
                 this.attacking = true;
                 player.chargingEnemies.add(this);
+
+                if (!attackHintShown) {
+                    // Auto-select a weapon if not already holding one
+                    const slot = getSelectedSlot();
+                    const holdingWeapon = slot >= 0 && slot < player.inventory.length && getWeaponData(player.inventory[slot].item) !== null;
+
+                    if (!holdingWeapon) {
+                        const weaponIndex = player.inventory.findIndex(s => getWeaponData(s.item) !== null);
+                        if (weaponIndex >= 0) {
+                            setSelectedSlot(weaponIndex);
+                        }
+                    }
+
+                    // Only show hint if player actually has a weapon
+                    const finalSlot = getSelectedSlot();
+                    const hasWeapon = finalSlot >= 0 && finalSlot < player.inventory.length && getWeaponData(player.inventory[finalSlot].item) !== null;
+                    if (hasWeapon) {
+                        this.hintHandle = attachHint(this, "Attack", this.world, new Vec2(0, 1.25));
+                        attackHintShown = true;
+                    }
+                }
             }
 
             if (distSq < IMPACT_DISTANCE_SQ) {
@@ -200,6 +228,10 @@ export class Enemy extends Entity {
             if (this.attacking) {
                 this.attacking = false;
                 player.chargingEnemies.delete(this);
+                if (this.hintHandle) {
+                    this.hintHandle.destroy();
+                    this.hintHandle = null;
+                }
             }
 
             const toTarget = this.wanderTarget.sub(this.position);
