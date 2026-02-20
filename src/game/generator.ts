@@ -11,7 +11,7 @@ import { Bush, Jetwreck, PalmTree, Shipwreck, Suitcase, Tallgrass } from "./tree
 let reservedTiles = new Set<string>();
 
 // Keep track of large structures (like shipwrecks and jetwrecks) to avoid spawning entities too close to them
-let largeStructures: Vec2[] = [];
+let largeStructures: Vec2[] = [new Vec2(0, 0)]; // Spawn point counts as a large structure
 
 function subTileOffset(): Vec2 {
     const angle = Math.random() * 2 * Math.PI;

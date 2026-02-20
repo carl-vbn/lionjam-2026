@@ -357,3 +357,20 @@ export class Tallgrass extends Entity {
         ctx.drawImage(this.isTall ? txTallgrassLong : txTallgrassShort, this.position.x - 0.5, this.position.y - 0.5, 1, 1);
     }
 }
+
+const txPlaneCrash = getImage("/assets/entities/plane.png");
+const fpPlaneSmoke = new Flipbook("/assets/entities/smoke.png", 2, 0.5);
+
+export class CrashSite extends Entity {
+    constructor(position: Vec2) {
+        super(position);
+        this.layer = 0;
+        this.size = new Vec2(4, 4);
+    }
+
+    draw(ctx: RenderContext): void {
+        ctx.fillEllipse(this.position.x, this.position.y - 0.5, 2, 1, "rgba(0, 0, 0, 0.25)");
+        ctx.drawImage(txPlaneCrash, this.position.x - 2, this.position.y - 3, 4, 4);
+        ctx.drawFlipbook(fpPlaneSmoke, this.position.x - 2, this.position.y - 4, 4, 4);
+    }
+}

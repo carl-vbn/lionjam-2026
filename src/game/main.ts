@@ -5,12 +5,13 @@ import {
 } from "../engine/index.js";
 import { generateTile } from "./generator.js";
 import { Player } from "./player.js";
+import { CrashSite } from "./trees.js";
 import { drawHUD, handleUIClick, setSelectedSlot } from "./ui.js";
 
 // --- Setup ---
 
 const canvas = document.getElementById("game-canvas") as HTMLCanvasElement;
-const camera = new Camera(new Vec2(8, 8), 1);
+const camera = new Camera(new Vec2(0, 0), 1);
 const ctx = createContext({ canvas, camera, tileSize: 128 });
 const world = new World();
 const particles = new ParticleSystem();
@@ -36,12 +37,15 @@ function generateSurroundings(center: Vec2, radius: number): void {
 
 // --- Entities ---
 
-const player = new Player(new Vec2(8, 8), world, generateSurroundings);
+const player = new Player(new Vec2(4, 2), world, generateSurroundings);
 
 world.addEntity(player);
 
 // Generate initial surroundings around player
 generateSurroundings(player.position, 12);
+
+// Place plane crash
+world.addEntity(new CrashSite(new Vec2(0, 0)));
 
 // --- Camera controls ---
 
