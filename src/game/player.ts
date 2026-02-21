@@ -2,7 +2,7 @@ import { Vec2, Entity, ParticleSystem, RenderContext, InputHandler, World, attac
 import { createWhiteSilhouette, getImage } from "../engine/image.js";
 import { NaturalTile } from "./tiles.js";
 import { dropItems, getItemAction, getItemSprite, ItemId } from "./items.js";
-import { getSelectedSlot } from "./ui.js";
+import { getSelectedSlot, setDeathLocation } from "./ui.js";
 import { smokeSprite, Enemy } from "./enemy.js";
 import { Bonfire, Campfire, Shelter, ShelterShadow } from "./placeables.js";
 
@@ -86,6 +86,7 @@ export class Player extends Entity {
     this.velocity = Vec2.zero();
     this.knockbackVelocity = Vec2.zero();
     this.respawnTimer = 3;
+    setDeathLocation(this.position.clone());
 
     // Smoke particles
     ParticleSystem.getInstance().spawn({
@@ -174,12 +175,12 @@ export class Player extends Entity {
 
     switch (itemId) {
       case ItemId.Coconut:
-        this.water = Math.min(100, this.water + 40);
+        this.water = Math.min(100, this.water + 30);
         this.hunger = Math.min(100, this.hunger + 10);
         break;
       case ItemId.Mango:
-        this.hunger = Math.min(100, this.hunger + 30);
-        this.water = Math.min(100, this.water + 10);
+        this.hunger = Math.min(100, this.hunger + 20);
+        this.water = Math.min(100, this.water + 20);
         break;
       case ItemId.CookedMeat:
         this.hunger = Math.min(100, this.hunger + 40);

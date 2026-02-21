@@ -96,7 +96,7 @@ export const RECIPES: Recipe[] = [
     { result: ItemId.Spear, ingredients: { [ItemId.Stick]: 3, [ItemId.Rope]: 1 } },
     { result: ItemId.Axe, ingredients: { [ItemId.Stick]: 2, [ItemId.Rope]: 2, [ItemId.Rock]: 1 } },
     { result: ItemId.Campfire, ingredients: { [ItemId.Stick]: 4, [ItemId.Log]: 3 } },
-    { result: ItemId.Bonfire, ingredients: { [ItemId.Rock]: 5 } },
+    { result: ItemId.Bonfire, ingredients: { [ItemId.Rock]: 50 } },
     { result: ItemId.Shelter, ingredients: { [ItemId.Stick]: 6, [ItemId.Log]: 8, [ItemId.Rope]: 5 } },
 ];
 

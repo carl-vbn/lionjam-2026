@@ -2,6 +2,7 @@ import { createOutlinedImage, Entity, Flipbook, getImage, HintHandle, RenderCont
 import { attachHint } from "../engine/index.js";
 import { getItemDisplayName, ItemId } from "./items.js";
 import { Player } from "./player.js";
+import { registerCompassTarget } from "./ui.js";
 
 const txShelter = getImage("assets/entities/shelter/shelter.png");
 const txShelterShadow = getImage("assets/entities/shelter/shadow.png");
@@ -178,7 +179,7 @@ export class Bonfire extends Entity {
 
     private showHint(text: string | string[]): void {
         if (this.hintHandle) return;
-        this.hintHandle = attachHint(this, text, this.world, new Vec2(0, 1));
+        this.hintHandle = attachHint(this, text, this.world, new Vec2(0, 0));
     }
 
     private clearHint(): void {
@@ -257,13 +258,34 @@ export class Bonfire extends Entity {
 
 const SHELTER_REGEN_RATE = 5; // health per second
 
+const SHELTER_PREFIXES = [
+    "Camp", "Fort", "Haven", "Refuge", "Outpost", "Lodge", "Nest", "Den", "Hut",
+    "Base", "Mac", "Safehouse", "House", "Castle"
+];
+
+const SHELTER_SUFFIXES = [
+    "Alpha", "Bravo", "Delta", "Echo", "Nova", "Prime", "Cove", "Ridge", "Peak", "Bay", "Talon", "Point",
+    "Smith", "Johnson", "Jefferson", "Williams", "Brown", "Jones", "Miller", "Davis", "Mudd", "McGuffin",
+    "O'Connor", "Garcia", "Rodriguez", "Wilson", "Martinez", "Anderson", "Taylor", "Thomas", "Hernandez",
+    "Moore", "Martin"
+];
+
+function generateName(): string {
+    const prefix = SHELTER_PREFIXES[Math.floor(Math.random() * SHELTER_PREFIXES.length)];
+    const suffix = SHELTER_SUFFIXES[Math.floor(Math.random() * SHELTER_SUFFIXES.length)];
+    return `${prefix} ${suffix}`;
+}
+
 export class Shelter extends Entity {
     highlighted = false;
+    name: string;
 
     constructor(position: Vec2) {
         super(position);
         this.size = new Vec2(2, 1.5);
         this.layer = 1;
+        this.name = generateName();
+        registerCompassTarget(this.name, position);
     }
 
     update(dt: number): void {
@@ -287,6 +309,16 @@ export class Shelter extends Entity {
     draw(ctx: RenderContext): void {
         const img = this.highlighted ? txShelterOutlined : txShelter;
         ctx.drawImage(img, this.position.x - 1, this.position.y - 1.5, 2, 2);
+
+        if (this.highlighted) {
+            ctx.drawText(this.name, this.position.x, this.position.y - 1.6, {
+                align: "center",
+                baseline: "bottom",
+                size: 0.18,
+                color: "#ffffff",
+                font: "monospace",
+            });
+        }
     }
 
     get clickable(): boolean {

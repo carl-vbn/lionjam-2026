@@ -9,13 +9,37 @@ const txCompassBg = getImage("assets/ui/compass/background.png");
 const txCompassNeedle = getImage("assets/ui/compass/needle.png");
 const txInventorySlot = getImage("assets/ui/slot.png");
 const txButton = getImage("assets/ui/button.png");
+const txButtonLong = getImage("assets/ui/button_long.png");
 
 let txInventorySlotSelected = txInventorySlot;
 createOutlinedImage(txInventorySlot, 2, "cyan").then((outlined) => {
     txInventorySlotSelected = outlined;
 });
 
-const target = new Vec2(0, 0);
+// --- Compass target system ---
+
+interface CompassTarget { name: string; position: Vec2; }
+
+const shelterTargets: CompassTarget[] = [];
+let deathLocation: Vec2 | null = null;
+let selectedTargetIndex = 0;
+
+function getCompassTargets(): CompassTarget[] {
+    const targets: CompassTarget[] = [{ name: "Crash site", position: new Vec2(0, 0) }];
+    targets.push(...shelterTargets);
+    if (deathLocation) {
+        targets.push({ name: "Last death", position: deathLocation });
+    }
+    return targets;
+}
+
+export function registerCompassTarget(name: string, position: Vec2): void {
+    shelterTargets.push({ name, position });
+}
+
+export function setDeathLocation(position: Vec2): void {
+    deathLocation = position;
+}
 
 function drawBar(ctx: RenderContext, x: number, y: number, sprite: HTMLImageElement, barColor: string, value: number) {
     // Shadow
@@ -155,6 +179,29 @@ export function handleUIClick(screenPos: Vec2, screenWidth: number, screenHeight
         return true;
     }
 
+    // Check compass target selector buttons
+    const selectorY = 155;
+    const selectorCenterX = 80;
+    const btnSize = 32;
+    const longBtnW = 96;
+    const compassTargets = getCompassTargets();
+
+    const leftBtnX = selectorCenterX - longBtnW / 2 - btnSize;
+    if (compassTargets.length > 1 &&
+        screenPos.x >= leftBtnX && screenPos.x <= leftBtnX + btnSize &&
+        screenPos.y >= selectorY && screenPos.y <= selectorY + btnSize) {
+        selectedTargetIndex = (selectedTargetIndex - 1 + compassTargets.length) % compassTargets.length;
+        return true;
+    }
+
+    const rightBtnX = selectorCenterX + longBtnW / 2;
+    if (compassTargets.length > 1 &&
+        screenPos.x >= rightBtnX && screenPos.x <= rightBtnX + btnSize &&
+        screenPos.y >= selectorY && screenPos.y <= selectorY + btnSize) {
+        selectedTargetIndex = (selectedTargetIndex + 1) % compassTargets.length;
+        return true;
+    }
+
     return false;
 }
 
@@ -162,11 +209,16 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
     const fps = 1 / dt;
     const player = Player.getInstance()!;
 
+    const { screenPos: mousePos } = InputHandler.getInstance()!.getMousePos();
+
     drawBar(ctx, ctx.width - 380, 30, txHealthbar, "#ff0000", player.health / 100);
     drawBar(ctx, ctx.width - 380, 80, txWaterbar, "#0088ff", player.water / 100);
     drawBar(ctx, ctx.width - 380, 130, txFoodbar, "#ff8800", player.hunger / 100);
 
-    const compassAngle = Math.atan2(target.y - player.position.y, target.x - player.position.x);
+    const targets = getCompassTargets();
+    if (selectedTargetIndex >= targets.length) selectedTargetIndex = 0;
+    const currentTarget = targets[selectedTargetIndex];
+    const compassAngle = Math.atan2(currentTarget.position.y - player.position.y, currentTarget.position.x - player.position.x);
 
     drawCompass(ctx, 80, 80, 128, compassAngle + Math.PI / 2);
 
@@ -175,10 +227,38 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
     drawShadowedText(ctx, `X: ${player.position.x.toFixed(1)}`, 150, 40, textOpts);
     drawShadowedText(ctx, `Y: ${player.position.y.toFixed(1)}`, 150, 60, textOpts);
     drawShadowedText(ctx, `FPS: ${Math.round(fps)}`, 150, 80, textOpts);
-    drawShadowedText(ctx, `Tracking: crash site`, 150, 100, textOpts);
-    drawShadowedText(ctx, `(X: ${target.x.toFixed(1)}, Y: ${target.y.toFixed(1)})`, 150, 120, textOpts);
+    drawShadowedText(ctx, `Tracking: ${currentTarget.name}`, 150, 100, textOpts);
+    drawShadowedText(ctx, `(X: ${currentTarget.position.x.toFixed(1)}, Y: ${currentTarget.position.y.toFixed(1)})`, 150, 120, textOpts);
 
-    const { screenPos: mousePos } = InputHandler.getInstance()!.getMousePos();
+    // Compass target selector (below compass)
+    const selectorY = 155;
+    const selectorCenterX = 80;
+    const btnSize = 32;
+    const longBtnW = 96;
+    const longBtnH = 32;
+
+    // Left button
+    if (targets.length > 1) {
+        const leftBtnX = selectorCenterX - longBtnW / 2 - btnSize;
+        const leftBtnHovered = mousePos.x >= leftBtnX && mousePos.x <= leftBtnX + btnSize && mousePos.y >= selectorY && mousePos.y <= selectorY + btnSize;
+        ctx.drawImage(txButton, leftBtnX, selectorY, btnSize, btnSize);
+        if (leftBtnHovered) ctx.fillRect(leftBtnX, selectorY, btnSize, btnSize, "rgba(0, 0, 0, 0.1)");
+        drawShadowedText(ctx, "<", leftBtnX + btnSize / 2, selectorY + btnSize / 2 + 1, { font: "monospace", size: 16, align: "center" as CanvasTextAlign, baseline: "middle" as CanvasTextBaseline });
+    }
+
+    // Center label
+    const longBtnX = selectorCenterX - longBtnW / 2;
+    ctx.drawImage(txButtonLong, longBtnX, selectorY, longBtnW, longBtnH);
+    drawShadowedText(ctx, currentTarget.name, selectorCenterX, selectorY + longBtnH / 2 + 1, { font: "monospace", size: 11, align: "center" as CanvasTextAlign, baseline: "middle" as CanvasTextBaseline });
+
+    // Right button
+    if (targets.length > 1) {
+        const rightBtnX = selectorCenterX + longBtnW / 2;
+        const rightBtnHovered = mousePos.x >= rightBtnX && mousePos.x <= rightBtnX + btnSize && mousePos.y >= selectorY && mousePos.y <= selectorY + btnSize;
+        ctx.drawImage(txButton, rightBtnX, selectorY, btnSize, btnSize);
+        if (rightBtnHovered) ctx.fillRect(rightBtnX, selectorY, btnSize, btnSize, "rgba(0, 0, 0, 0.1)");
+        drawShadowedText(ctx, ">", rightBtnX + btnSize / 2, selectorY + btnSize / 2 + 1, { font: "monospace", size: 16, align: "center" as CanvasTextAlign, baseline: "middle" as CanvasTextBaseline });
+    }
 
     for (let i = 0; i < player.inventory.length; i++) {
         let j = player.inventory.length - 1 - i; // reverse order for right-to-left

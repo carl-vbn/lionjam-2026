@@ -88,6 +88,7 @@ export class PalmTree extends Entity {
 
     onClick(_worldPos: Vec2): void {
         if (this.chopHighlighted) {
+            Player.getInstance().swingItem();
             this.flashTimer = 0.2;
 
             if (this.hasCoconuts) {
@@ -227,6 +228,7 @@ export class MangoTree extends Entity {
 
     onClick(_worldPos: Vec2): void {
         if (this.chopHighlighted) {
+            Player.getInstance().swingItem();
             this.flashTimer = 0.2;
 
             if (this.hasMangoes) {
