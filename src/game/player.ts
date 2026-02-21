@@ -4,7 +4,7 @@ import { NaturalTile } from "./tiles.js";
 import { dropItems, getItemAction, getItemSprite, ItemId } from "./items.js";
 import { getSelectedSlot } from "./ui.js";
 import { smokeSprite, Enemy } from "./enemy.js";
-import { Bonfire, Campfire } from "./placeables.js";
+import { Bonfire, Campfire, Shelter, ShelterShadow } from "./placeables.js";
 
 const playerImgs = {
   base: getImage("/assets/entities/player/base.png"),
@@ -26,6 +26,8 @@ const whiteSilhouettes: { base: HTMLImageElement | null; right: HTMLImageElement
 createWhiteSilhouette(playerImgs.base).then((img) => { whiteSilhouettes.base = img; });
 createWhiteSilhouette(playerImgs.right).then((img) => { whiteSilhouettes.right = img; });
 createWhiteSilhouette(playerImgs.left).then((img) => { whiteSilhouettes.left = img; });
+
+let shelterHintShown = false;
 
 export type InventorySlot = {
   item: ItemId;
@@ -216,6 +218,27 @@ export class Player extends Entity {
         const tile = this._world.getTile(tileX, tileY);
         if (tile && !tile.solid) {
           this._world.addEntity(new Bonfire(new Vec2(tileX + 0.5, tileY + 0.5), this._world));
+        }
+        break;
+      }
+      case ItemId.Shelter: {
+        const tileX = Math.floor(this.position.x);
+        const tileY = Math.floor(this.position.y);
+        // Check all 4 tiles in the 2x2 area are non-solid
+        const tiles = [
+          this._world.getTile(tileX, tileY),
+          this._world.getTile(tileX + 1, tileY),
+          this._world.getTile(tileX, tileY - 1),
+          this._world.getTile(tileX + 1, tileY - 1),
+        ];
+        if (tiles.every(t => t && !t.solid)) {
+          const shelter = new Shelter(new Vec2(tileX + 1.0, tileY + 0.0));
+          this._world.addEntity(shelter);
+          this._world.addEntity(new ShelterShadow(new Vec2(tileX + 1.0, tileY + 0.0)));
+          if (!shelterHintShown) {
+            attachHint(shelter, "Stand inside to heal", this._world, new Vec2(0, 0.5)).destroyAfter(5);
+            shelterHintShown = true;
+          }
         }
         break;
       }

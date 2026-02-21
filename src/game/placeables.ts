@@ -3,6 +3,11 @@ import { attachHint } from "../engine/index.js";
 import { getItemDisplayName, ItemId } from "./items.js";
 import { Player } from "./player.js";
 
+const txShelter = getImage("assets/entities/shelter/shelter.png");
+const txShelterShadow = getImage("assets/entities/shelter/shadow.png");
+let txShelterOutlined = txShelter;
+createOutlinedImage(txShelter, 2, "pink").then((o) => { txShelterOutlined = o; });
+
 const txCampfireBase = getImage("assets/entities/campfire/campfire_base.png");
 const fpCampfire = new Flipbook("assets/entities/campfire/campfire_animated.png", 2, 0.3);
 const fpCampfireOutlined = new Flipbook("assets/entities/campfire/campfire_animated.png", 2, 0.3, { width: 2, color: "orange" });
@@ -138,13 +143,13 @@ let _bonfireStageCosts: StageCost[] | null = null;
 function getBonfireStageCosts(): StageCost[] {
     if (!_bonfireStageCosts) {
         _bonfireStageCosts = [
-            { items: { [ItemId.Stick]: 2 } },                              // stage 0 -> 1
-            { items: { [ItemId.Stick]: 3 } },                              // stage 1 -> 2
-            { items: { [ItemId.Log]: 2 } },                                // stage 2 -> 3
-            { items: { [ItemId.Log]: 3 } },                                // stage 3 -> 4
-            { items: { [ItemId.Log]: 4, [ItemId.Stick]: 2 } },            // stage 4 -> 5
-            { items: { [ItemId.Log]: 5, [ItemId.Stick]: 3 } },            // stage 5 -> 6
-            { items: { [ItemId.Log]: 6, [ItemId.Stick]: 4 } },            // stage 6 -> 7
+            { items: { [ItemId.Stick]: 5 } },                              // stage 0 -> 1
+            { items: { [ItemId.Log]: 6 } },                              // stage 1 -> 2
+            { items: { [ItemId.Stick]: 10} },                                // stage 2 -> 3
+            { items: { [ItemId.Log]: 8 } },                                // stage 3 -> 4
+            { items: { [ItemId.Stick]: 16 } },            // stage 4 -> 5
+            { items: { [ItemId.Log]: 20 } },            // stage 5 -> 6
+            { items: { [ItemId.Log]: 30 } },            // stage 6 -> 7
         ];
     }
     return _bonfireStageCosts;
@@ -245,5 +250,58 @@ export class Bonfire extends Entity {
 
     get clickable(): boolean {
         return true;
+    }
+}
+
+// --- Shelter ---
+
+const SHELTER_REGEN_RATE = 5; // health per second
+
+export class Shelter extends Entity {
+    highlighted = false;
+
+    constructor(position: Vec2) {
+        super(position);
+        this.size = new Vec2(2, 1.5);
+        this.layer = 1;
+    }
+
+    update(dt: number): void {
+        const player = Player.getInstance();
+        const px = player.position.x;
+        const py = player.position.y;
+
+        // Check if player is within the 2x2 bounding box
+        const insideShelter =
+            px >= this.position.x - 0.5 && px <= this.position.x + 0.5 &&
+            py >= this.position.y - 1 && py <= this.position.y;
+
+        if (insideShelter && !player.isDead) {
+            player.health = Math.min(100, player.health + SHELTER_REGEN_RATE * dt);
+        }
+
+        const playerIsClose = player.position.distanceSquaredTo(this.position) < 16;
+        this.highlighted = playerIsClose;
+    }
+
+    draw(ctx: RenderContext): void {
+        const img = this.highlighted ? txShelterOutlined : txShelter;
+        ctx.drawImage(img, this.position.x - 1, this.position.y - 1.5, 2, 2);
+    }
+
+    get clickable(): boolean {
+        return true;
+    }
+}
+
+export class ShelterShadow extends Entity {
+    constructor(position: Vec2) {
+        super(position);
+        this.size = new Vec2(2, 2);
+        this.layer = 0;
+    }
+
+    draw(ctx: RenderContext): void {
+        ctx.drawImage(txShelterShadow, this.position.x - 1, this.position.y - 1.5, 2, 2);
     }
 }

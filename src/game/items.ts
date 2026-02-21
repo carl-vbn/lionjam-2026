@@ -21,7 +21,8 @@ export enum ItemId {
     UndrinkablePot = "pot_undrinkable",
     Medkit = "medkit",
     Mango = "mango",
-    Bonfire = "bonfire"
+    Bonfire = "bonfire",
+    Shelter = "shelter"
 }
 
 export interface WeaponData {
@@ -60,7 +61,8 @@ const ITEM_DISPLAY_NAMES: Record<ItemId, string> = {
     [ItemId.UndrinkablePot]: "Contaminated Water",
     [ItemId.Medkit]: "Medkit",
     [ItemId.Mango]: "Mango",
-    [ItemId.Bonfire]: "Bonfire"
+    [ItemId.Bonfire]: "Bonfire",
+    [ItemId.Shelter]: "Shelter"
 };
 
 export function getItemDisplayName(itemId: ItemId): string {
@@ -76,7 +78,8 @@ const ITEM_ACTIONS: Partial<Record<ItemId, string>> = {
     [ItemId.Bonfire]: "place",
     [ItemId.Waterbottle]: "drink",
     [ItemId.DrinkablePot]: "drink",
-    [ItemId.Medkit]: "use"
+    [ItemId.Medkit]: "use",
+    [ItemId.Shelter]: "place"
 };
 
 export function getItemAction(itemId: ItemId): string | null {
@@ -93,6 +96,7 @@ export const RECIPES: Recipe[] = [
     { result: ItemId.Axe, ingredients: { [ItemId.Stick]: 2, [ItemId.Rope]: 2, [ItemId.Rock]: 1 } },
     { result: ItemId.Campfire, ingredients: { [ItemId.Stick]: 4, [ItemId.Log]: 3 } },
     { result: ItemId.Bonfire, ingredients: { [ItemId.Rock]: 5 } },
+    { result: ItemId.Shelter, ingredients: { [ItemId.Stick]: 6, [ItemId.Log]: 8, [ItemId.Rope]: 5 } },
 ];
 
 const ITEM_SPRITES: Record<ItemId, string> = {
@@ -113,7 +117,8 @@ const ITEM_SPRITES: Record<ItemId, string> = {
     [ItemId.UndrinkablePot]: "/assets/items/pot_undrinkable.png",
     [ItemId.Medkit]: "/assets/items/medkit.png",
     [ItemId.Mango]: "/assets/items/mango.png",
-    [ItemId.Bonfire]: "/assets/entities/bonfire/base.png"
+    [ItemId.Bonfire]: "/assets/entities/bonfire/base.png",
+    [ItemId.Shelter]: "/assets/items/shelter.png"
 };
 
 interface ItemAssets {
