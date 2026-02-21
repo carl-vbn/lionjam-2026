@@ -5,6 +5,8 @@ import { RenderContext } from "../engine/render-context.js";
 import { Tile } from "../engine/tile.js";
 import { Vec2 } from "../engine/vec2.js";
 import { World } from "../engine/world.js";
+import { Player } from "./player.js";
+import { ItemId } from "./items.js";
 
 const txSand = getImage("/assets/tiles/sand.png");
 const txGrass = getImage("/assets/tiles/grass/full.png");
@@ -71,6 +73,17 @@ export class WaterTile extends NaturalTile {
 
     draw(ctx: RenderContext): void {
         ctx.drawFlipbook(fpWater, 0, 0, 1, 1);
+    }
+
+    onClick(_worldPos: Vec2): void {
+        const player = Player.getInstance();
+        if (player.isDead) return;
+        const tileCenter = this.position.add(new Vec2(0.5, 0.5));
+        if (player.position.distanceSquaredTo(tileCenter) > 64) return;
+
+        if (player.isHolding(ItemId.Pot)) {
+            player.replaceHeldItem(ItemId.UndrinkablePot);
+        }
     }
 
     getParticleSource(): ParticleSource | null {

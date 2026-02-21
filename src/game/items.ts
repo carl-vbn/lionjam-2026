@@ -15,7 +15,9 @@ export enum ItemId {
     Rock = "rock",
     Log = "log",
     Campfire = "campfire",
-    Waterbottle = "waterbottle"
+    Waterbottle = "waterbottle",
+    DrinkablePot = "pot_drinkable",
+    UndrinkablePot = "pot_undrinkable"
 }
 
 export interface WeaponData {
@@ -49,7 +51,9 @@ const ITEM_DISPLAY_NAMES: Record<ItemId, string> = {
     [ItemId.Rock]: "Rock",
     [ItemId.Log]: "Log",
     [ItemId.Campfire]: "Campfire",
-    [ItemId.Waterbottle]: "Water Bottle"
+    [ItemId.Waterbottle]: "Water Bottle",
+    [ItemId.DrinkablePot]: "Drinkable Water",
+    [ItemId.UndrinkablePot]: "Contaminated Water"
 };
 
 export function getItemDisplayName(itemId: ItemId): string {
@@ -61,7 +65,8 @@ const ITEM_ACTIONS: Partial<Record<ItemId, string>> = {
     [ItemId.RawMeat]: "consume",
     [ItemId.CookedMeat]: "consume",
     [ItemId.Campfire]: "place",
-    [ItemId.Waterbottle]: "drink"
+    [ItemId.Waterbottle]: "drink",
+    [ItemId.DrinkablePot]: "drink"
 };
 
 export function getItemAction(itemId: ItemId): string | null {
@@ -92,7 +97,9 @@ const ITEM_SPRITES: Record<ItemId, string> = {
     [ItemId.Rock]: "/assets/items/rock.png",
     [ItemId.Log]: "/assets/items/log.png",
     [ItemId.Campfire]: "/assets/items/campfire.png",
-    [ItemId.Waterbottle]: "/assets/items/waterbottle.png"
+    [ItemId.Waterbottle]: "/assets/items/waterbottle.png",
+    [ItemId.DrinkablePot]: "/assets/items/pot_drinkable.png",
+    [ItemId.UndrinkablePot]: "/assets/items/pot_undrinkable.png"
 };
 
 interface ItemAssets {

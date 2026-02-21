@@ -125,6 +125,18 @@ export class Player extends Entity {
     }
   }
 
+  replaceHeldItem(newItemId: ItemId): void {
+    const slot = getSelectedSlot();
+    if (slot < 0 || slot >= this.inventory.length) return;
+    const heldSlot = this.inventory[slot];
+    if (heldSlot.quantity > 1) {
+      heldSlot.quantity--;
+      this.inventory.splice(slot + 1, 0, { item: newItemId, quantity: 1 });
+    } else {
+      heldSlot.item = newItemId;
+    }
+  }
+
   attackNearestEnemy(): void {
     if (this.dead || this.chargingEnemies.size === 0) return;
     let nearest: Enemy | null = null;
@@ -169,6 +181,10 @@ export class Player extends Entity {
         this.hunger = Math.min(100, this.hunger + 20);
         this.water = Math.max(0, this.water - 20);
         this.takeDamage(10);
+        break;
+      case ItemId.Waterbottle:
+      case ItemId.DrinkablePot:
+        this.water = Math.min(100, this.water + 50);
         break;
       case ItemId.Campfire:
         const tileX = Math.floor(this.position.x);

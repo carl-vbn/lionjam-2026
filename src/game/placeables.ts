@@ -14,6 +14,7 @@ createOutlinedImage(txCampfireBase, 2, "orange").then((outlined) => {
 let campfireToolHintShown = false;
 let campfireLightHintShown = false;
 let campfireCookHintShown = false;
+let campfireBoilHintShown = false;
 
 export class Campfire extends Entity {
     lit=false;
@@ -54,6 +55,14 @@ export class Campfire extends Entity {
                     .destroyAfter(5);
                 campfireCookHintShown = true;
             }
+        } else if (this.lit && playerIsClose && player.isHolding(ItemId.UndrinkablePot)) {
+            this.highlighted = true;
+
+            if (!campfireBoilHintShown) {
+                attachHint(this, "Boil", this.world, new Vec2(0, 1))
+                    .destroyAfter(5);
+                campfireBoilHintShown = true;
+            }
         } else if (!this.lit && holdingLighter && playerIsClose) {
             this.highlighted = true;
 
@@ -75,8 +84,9 @@ export class Campfire extends Entity {
         if (!this.lit && player.isHolding(ItemId.MagGlass)) {
             this.lit = true;
         } else if (this.lit && player.isHolding(ItemId.RawMeat)) {
-            player.removeItem(ItemId.RawMeat);
-            player.addItem(ItemId.CookedMeat);
+            player.replaceHeldItem(ItemId.CookedMeat);
+        } else if (this.lit && player.isHolding(ItemId.UndrinkablePot)) {
+            player.replaceHeldItem(ItemId.DrinkablePot);
         } else {
             player.addItem(ItemId.MagGlass);
         }
