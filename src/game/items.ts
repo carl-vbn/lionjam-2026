@@ -78,6 +78,7 @@ const ITEM_ACTIONS: Partial<Record<ItemId, string>> = {
     [ItemId.Bonfire]: "place",
     [ItemId.Waterbottle]: "drink",
     [ItemId.DrinkablePot]: "drink",
+    [ItemId.UndrinkablePot]: "drink",
     [ItemId.Medkit]: "use",
     [ItemId.Shelter]: "place"
 };

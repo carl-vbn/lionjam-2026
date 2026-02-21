@@ -28,6 +28,8 @@ createWhiteSilhouette(playerImgs.right).then((img) => { whiteSilhouettes.right =
 createWhiteSilhouette(playerImgs.left).then((img) => { whiteSilhouettes.left = img; });
 
 let shelterHintShown = false;
+let rawMeatHintShown = false;
+let contaminatedWaterHintShown = false;
 
 export type InventorySlot = {
   item: ItemId;
@@ -187,10 +189,22 @@ export class Player extends Entity {
         this.hunger = Math.min(100, this.hunger + 20);
         this.water = Math.max(0, this.water - 20);
         this.takeDamage(10);
+        if (!rawMeatHintShown) {
+          attachHint(this, "Cook meat at a campfire", this._world, new Vec2(0, 1)).destroyAfter(5);
+          rawMeatHintShown = true;
+        }
         break;
       case ItemId.Waterbottle:
       case ItemId.DrinkablePot:
         this.water = Math.min(100, this.water + 50);
+        break;
+      case ItemId.UndrinkablePot:
+        this.water = Math.min(100, this.water + 30);
+        this.takeDamage(15);
+        if (!contaminatedWaterHintShown) {
+          attachHint(this, "Boil water at a campfire", this._world, new Vec2(0, 1)).destroyAfter(5);
+          contaminatedWaterHintShown = true;
+        }
         break;
       case ItemId.Medkit:
         this.health = 100;
@@ -386,7 +400,7 @@ export class Player extends Entity {
     if (this.moveHintTimer > 0) {
       this.moveHintTimer -= _dt;
       if (this.moveHintTimer <= 0) {
-        attachHint(this, "Use W, A, S, D to move", this._world, new Vec2(0, 0.5))
+        attachHint(this, "Use W, A, S, D to move", this._world, new Vec2(0, 1))
           .destroyAfter(3);
       }
     }

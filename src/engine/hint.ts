@@ -89,7 +89,7 @@ class HintEntity extends Entity {
     const lineCount = this.lines.length;
     const rectHeight = 0.3 + (lineCount - 1) * lineHeight;
     const maxLineLen = Math.max(...this.lines.map(l => l.length));
-    const rectWidth = Math.max(1, maxLineLen * 0.08);
+    const rectWidth = Math.max(1, maxLineLen * 0.09);
 
     // Hint is drawn above the host entity. The spike sits at the top of the entity,
     // and the dark rect + text sit above that.
