@@ -7,6 +7,7 @@ import { Vec2 } from "../engine/vec2.js";
 import { World } from "../engine/world.js";
 import { Player } from "./player.js";
 import { ItemId } from "./items.js";
+import { sounds } from "./sounds.js";
 
 const txSand = getImage("/assets/tiles/sand.png");
 const txGrass = getImage("/assets/tiles/grass/full.png");
@@ -120,6 +121,7 @@ export class WaterTile extends NaturalTile {
 
         if (player.isHolding(ItemId.Pot)) {
             player.replaceHeldItem(ItemId.UndrinkablePot);
+            sounds.watertake.play();
         }
     }
 

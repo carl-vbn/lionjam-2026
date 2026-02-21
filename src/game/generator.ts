@@ -19,7 +19,7 @@ function subTileOffset(): Vec2 {
     return new Vec2(Math.cos(angle) * radius, Math.sin(angle) * radius);
 }
 
-function getDryness(x: number, y: number): number {
+export function getDryness(x: number, y: number): number {
     let dryness = noise.perlin2((x - 10) * 0.1, y * 0.1) / 2 + 0.5;
     if (y > -50) {
         dryness = Math.max(0, dryness * (1 - (y + 50) * 0.01));

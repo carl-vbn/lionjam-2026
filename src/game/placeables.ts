@@ -3,6 +3,7 @@ import { attachHint } from "../engine/index.js";
 import { getItemDisplayName, ItemId } from "./items.js";
 import { Player } from "./player.js";
 import { registerCompassTarget } from "./ui.js";
+import { sounds } from "./sounds.js";
 
 const txShelter = getImage("assets/entities/shelter/shelter.png");
 const txShelterShadow = getImage("assets/entities/shelter/shadow.png");
@@ -27,6 +28,7 @@ export class Campfire extends Entity {
     lit=false;
     highlighted = false;
     world: World;
+    private burningAudio: HTMLAudioElement | null = null;
 
     constructor(position: Vec2, world: World) {
         super(position);
@@ -55,6 +57,16 @@ export class Campfire extends Entity {
         const player = Player.getInstance();
         const holdingLighter = player.isHolding(ItemId.MagGlass);
         const playerIsClose = player.position.distanceSquaredTo(this.position) < 4;
+
+        // Burning sound loop
+        if (this.lit && playerIsClose) {
+            if (!this.burningAudio) {
+                this.burningAudio = sounds.burning.playLooping(0.8);
+            }
+        } else if (this.burningAudio) {
+            this.burningAudio.pause();
+            this.burningAudio = null;
+        }
 
         if (this.lit && playerIsClose && (player.isHolding(ItemId.RawMeat))) {
             this.highlighted = true;
@@ -92,10 +104,13 @@ export class Campfire extends Entity {
 
         if (!this.lit && player.isHolding(ItemId.MagGlass)) {
             this.lit = true;
+            sounds.ignite.play();
         } else if (this.lit && player.isHolding(ItemId.RawMeat)) {
             player.replaceHeldItem(ItemId.CookedMeat);
+            sounds.grill.play();
         } else if (this.lit && player.isHolding(ItemId.UndrinkablePot)) {
             player.replaceHeldItem(ItemId.DrinkablePot);
+            sounds.grill.play();
         } else {
             player.addItem(ItemId.MagGlass);
         }

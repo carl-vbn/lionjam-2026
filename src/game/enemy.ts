@@ -3,6 +3,7 @@ import { createOutlinedImage, createWhiteSilhouette, getImage } from "../engine/
 import { Player } from "./player.js";
 import { dropItems, getWeaponData, getItemSprite, ItemId } from "./items.js";
 import { getSelectedSlot, setSelectedSlot } from "./ui.js";
+import { sounds } from "./sounds.js";
 
 let attackHintShown = false;
 
@@ -97,6 +98,7 @@ export class Enemy extends Entity {
         this.flashTimer = 0.15;
 
         if (this.health <= 0) {
+            sounds.kill.play(0.5);
             Player.getInstance().chargingEnemies.delete(this);
             if (this.hintHandle) {
                 this.hintHandle.destroy();
@@ -112,6 +114,8 @@ export class Enemy extends Entity {
             });
             dropItems(this.world, this.position, { [ItemId.RawMeat]: 1 });
             this.world.removeEntity(this);
+        } else {
+            sounds.damageOther.play();
         }
     }
 

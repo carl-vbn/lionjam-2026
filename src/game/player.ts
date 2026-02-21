@@ -5,6 +5,7 @@ import { dropItems, getItemAction, getItemSprite, ItemId } from "./items.js";
 import { getSelectedSlot, setDeathLocation } from "./ui.js";
 import { smokeSprite, Enemy } from "./enemy.js";
 import { Bonfire, Campfire, Shelter, ShelterShadow } from "./placeables.js";
+import { sounds } from "./sounds.js";
 
 const playerImgs = {
   base: getImage("/assets/entities/player/base.png"),
@@ -74,6 +75,7 @@ export class Player extends Entity {
     if (this.dead) return;
     this.health -= amount;
     this.flashTimer = 0.15;
+    sounds.damage.play();
 
     if (this.health <= 0) {
       this.health = 0;
@@ -87,6 +89,7 @@ export class Player extends Entity {
     this.knockbackVelocity = Vec2.zero();
     this.respawnTimer = 3;
     setDeathLocation(this.position.clone());
+    sounds.die.play();
 
     // Smoke particles
     ParticleSystem.getInstance().spawn({
@@ -136,7 +139,12 @@ export class Player extends Entity {
     const heldSlot = this.inventory[slot];
     if (heldSlot.quantity > 1) {
       heldSlot.quantity--;
-      this.inventory.splice(slot + 1, 0, { item: newItemId, quantity: 1 });
+      const existing = this.inventory.find(s => s.item === newItemId);
+      if (existing) {
+        existing.quantity++;
+      } else {
+        this.inventory.splice(slot + 1, 0, { item: newItemId, quantity: 1 });
+      }
     } else {
       heldSlot.item = newItemId;
     }
@@ -224,6 +232,7 @@ export class Player extends Entity {
         const tile = this._world.getTile(tileX, tileY);
         if (tile && !tile.solid) {
           this._world.addEntity(new Campfire(new Vec2(tileX + 0.5, tileY + 0.5), this._world));
+          sounds.place.play();
         }
         break;
       }
@@ -233,6 +242,7 @@ export class Player extends Entity {
         const tile = this._world.getTile(tileX, tileY);
         if (tile && !tile.solid) {
           this._world.addEntity(new Bonfire(new Vec2(tileX + 0.5, tileY + 0.5), this._world));
+          sounds.place.play();
         }
         break;
       }
@@ -250,6 +260,7 @@ export class Player extends Entity {
           const shelter = new Shelter(new Vec2(tileX + 1.0, tileY + 0.0));
           this._world.addEntity(shelter);
           this._world.addEntity(new ShelterShadow(new Vec2(tileX + 1.0, tileY + 0.0)));
+          sounds.place.play();
           if (!shelterHintShown) {
             attachHint(shelter, "Stand inside to heal", this._world, new Vec2(0, 0.5)).destroyAfter(5);
             shelterHintShown = true;

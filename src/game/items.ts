@@ -2,6 +2,7 @@ import { Entity, RenderContext, Vec2, World } from "../engine/index.js";
 import { createOutlinedImage, getImage } from "../engine/image.js";
 import { NaturalTile } from "./tiles.js";
 import { Player } from "./player.js";
+import { sounds } from "./sounds.js";
 
 export enum ItemId {
     Stick = "stick",
@@ -234,11 +235,13 @@ export class Item extends Entity {
             this.pickingUp = true;
             this.pickupProgress = 0;
             this.startPos = this.position.clone();
+            sounds.pickups[Math.floor(Math.random() * sounds.pickups.length)].play(0.6);
         } else if (distSq < PICKUP_DISTANCE_SQ && !player.isDead) {
             this.highlighted = false;
             this.pickingUp = true;
             this.pickupProgress = 0;
             this.startPos = this.position.clone();
+            sounds.pickups[Math.floor(Math.random() * sounds.pickups.length)].play(0.6);
         } else {
             this.highlighted = distSq < HIGHLIGHT_DISTANCE_SQ;
         }

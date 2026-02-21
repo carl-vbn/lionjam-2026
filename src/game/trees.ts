@@ -3,6 +3,7 @@ import { createOutlinedImage, createWhiteSilhouette, getImage } from "../engine/
 import { dropItems, ItemId } from "./items.js";
 import { Player } from "./player.js";
 import { getSelectedSlot } from "./ui.js";
+import { sounds } from "./sounds.js";
 
 const fpBush = new Flipbook("/assets/entities/bush.png", 2, 0.75);
 const txTallgrassLong = getImage("/assets/entities/tallgrass/long.png");
@@ -90,6 +91,7 @@ export class PalmTree extends Entity {
         if (this.chopHighlighted) {
             Player.getInstance().swingItem();
             this.flashTimer = 0.2;
+            sounds.chop.play();
 
             if (this.hasCoconuts) {
                 const coconutCount = 1 + Math.floor(Math.random() * 3);
@@ -107,6 +109,7 @@ export class PalmTree extends Entity {
         } else if (this.hasCoconuts && this.highlighted) {
             this.hasCoconuts = false;
             this.flashTimer = 0.2;
+            sounds.treeshake.play();
 
             // Spawn 1-3 coconut items around the base
             const count = 1 + Math.floor(Math.random() * 3);
@@ -230,6 +233,7 @@ export class MangoTree extends Entity {
         if (this.chopHighlighted) {
             Player.getInstance().swingItem();
             this.flashTimer = 0.2;
+            sounds.chop.play();
 
             if (this.hasMangoes) {
                 const mangoCount = 1 + Math.floor(Math.random() * 3);
@@ -247,6 +251,7 @@ export class MangoTree extends Entity {
         } else if (this.hasMangoes && this.highlighted) {
             this.hasMangoes = false;
             this.flashTimer = 0.2;
+            sounds.treeshake.play();
 
             const count = 1 + Math.floor(Math.random() * 3);
             dropItems(this.world, this.position, { [ItemId.Mango]: count });
@@ -358,6 +363,7 @@ export class Shipwreck extends Entity {
         if (!this.looted && this.highlighted) {
             this.looted = true;
             this.flashTimer = 0.2;
+            sounds.loot.play();
 
             const ropeCount = 2 + Math.floor(Math.random() * 4);
             const items: {[key in ItemId]?: number} = { [ItemId.Rope]: ropeCount };
@@ -447,6 +453,7 @@ export class Suitcase extends Entity {
 
     onClick(_worldPos: Vec2): void {
         if (this.highlighted) {
+            sounds.loot.play();
             const world = Player.getInstance().world;
 
             const possibleItems = [

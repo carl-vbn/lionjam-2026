@@ -3,10 +3,11 @@ import {
   InputHandler, createGameLoop, ParticleSystem,
   Flipbook, extractTextureChunks,
 } from "../engine/index.js";
-import { generateTile } from "./generator.js";
+import { generateTile, getDryness } from "./generator.js";
 import { Player } from "./player.js";
 import { CrashSite } from "./trees.js";
 import { drawHUD, handleUIClick, setSelectedSlot } from "./ui.js";
+import { sounds } from "./sounds.js";
 
 // --- Setup ---
 
@@ -131,11 +132,35 @@ const loop = createGameLoop((dt) => {
   ctx.endFrame();
   drawHUD(ctx, dt, camera);
 
+  // Update ambient music volumes based on player's tile dryness
+  if (atTheShoreAudio && seaAmbianceAudio) {
+    const dryness = getDryness(Math.floor(player.position.x), Math.floor(player.position.y));
+    const targetShoreVol = Math.max(0, Math.min(1, (dryness - 0.2) / 0.6));
+    const targetSeaVol   = Math.max(0, Math.min(1, 1 - dryness / 0.8));
+    const lerpSpeed = 1.5;
+    atTheShoreAudio.volume  += (targetShoreVol - atTheShoreAudio.volume)  * Math.min(1, lerpSpeed * dt);
+    seaAmbianceAudio.volume += (targetSeaVol   - seaAmbianceAudio.volume) * Math.min(1, lerpSpeed * dt);
+  }
+
   // Move camera to follow player
   const followSpeed = 2;
   const delta = followSpeed * dt;
   camera.position.x += (player.position.x - camera.position.x) * delta;
   camera.position.y += (player.position.y - camera.position.y) * delta;
 });
+
+// --- Music ---
+
+let atTheShoreAudio: HTMLAudioElement | null = null;
+let seaAmbianceAudio: HTMLAudioElement | null = null;
+
+function initMusic(): void {
+  if (atTheShoreAudio) return;
+  atTheShoreAudio = sounds.atTheShore.playLooping(0);
+  seaAmbianceAudio = sounds.seaAmbiance.playLooping(0);
+}
+
+window.addEventListener("click", initMusic, { once: true });
+window.addEventListener("keydown", initMusic, { once: true });
 
 loop.start();
