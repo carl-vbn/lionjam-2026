@@ -4,7 +4,7 @@ import { NaturalTile } from "./tiles.js";
 import { dropItems, getItemAction, getItemSprite, ItemId } from "./items.js";
 import { getSelectedSlot } from "./ui.js";
 import { smokeSprite, Enemy } from "./enemy.js";
-import { Campfire } from "./placeables.js";
+import { Bonfire, Campfire } from "./placeables.js";
 
 const playerImgs = {
   base: getImage("/assets/entities/player/base.png"),
@@ -201,7 +201,7 @@ export class Player extends Entity {
           speed: 1,
         });
         break;
-      case ItemId.Campfire:
+      case ItemId.Campfire: {
         const tileX = Math.floor(this.position.x);
         const tileY = Math.floor(this.position.y);
         const tile = this._world.getTile(tileX, tileY);
@@ -209,6 +209,16 @@ export class Player extends Entity {
           this._world.addEntity(new Campfire(new Vec2(tileX + 0.5, tileY + 0.5), this._world));
         }
         break;
+      }
+      case ItemId.Bonfire: {
+        const tileX = Math.floor(this.position.x);
+        const tileY = Math.floor(this.position.y);
+        const tile = this._world.getTile(tileX, tileY);
+        if (tile && !tile.solid) {
+          this._world.addEntity(new Bonfire(new Vec2(tileX + 0.5, tileY + 0.5), this._world));
+        }
+        break;
+      }
     }
     this.removeItem(itemId);
   }

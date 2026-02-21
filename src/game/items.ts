@@ -1,5 +1,6 @@
 import { Entity, RenderContext, Vec2, World } from "../engine/index.js";
 import { createOutlinedImage, getImage } from "../engine/image.js";
+import { NaturalTile } from "./tiles.js";
 import { Player } from "./player.js";
 
 export enum ItemId {
@@ -19,7 +20,8 @@ export enum ItemId {
     DrinkablePot = "pot_drinkable",
     UndrinkablePot = "pot_undrinkable",
     Medkit = "medkit",
-    Mango = "mango"
+    Mango = "mango",
+    Bonfire = "bonfire"
 }
 
 export interface WeaponData {
@@ -31,7 +33,7 @@ export interface WeaponData {
 const WEAPON_DATA: Partial<Record<ItemId, WeaponData>> = {
     [ItemId.Stick]: { damage: 10, range: 2, throwable: false },
     [ItemId.Coconut]: { damage: 5, range:8, throwable: true },
-    [ItemId.Spear]: { damage: 15, range: 8, throwable: true },
+    [ItemId.Spear]: { damage: 100, range: 8, throwable: true },
     [ItemId.Axe]: { damage: 20, range: 3, throwable: false },
     [ItemId.Rock]: { damage: 8, range: 10, throwable: true }
 };
@@ -57,7 +59,8 @@ const ITEM_DISPLAY_NAMES: Record<ItemId, string> = {
     [ItemId.DrinkablePot]: "Drinkable Water",
     [ItemId.UndrinkablePot]: "Contaminated Water",
     [ItemId.Medkit]: "Medkit",
-    [ItemId.Mango]: "Mango"
+    [ItemId.Mango]: "Mango",
+    [ItemId.Bonfire]: "Bonfire"
 };
 
 export function getItemDisplayName(itemId: ItemId): string {
@@ -70,6 +73,7 @@ const ITEM_ACTIONS: Partial<Record<ItemId, string>> = {
     [ItemId.Mango]: "consume",
     [ItemId.CookedMeat]: "consume",
     [ItemId.Campfire]: "place",
+    [ItemId.Bonfire]: "place",
     [ItemId.Waterbottle]: "drink",
     [ItemId.DrinkablePot]: "drink",
     [ItemId.Medkit]: "use"
@@ -88,6 +92,7 @@ export const RECIPES: Recipe[] = [
     { result: ItemId.Spear, ingredients: { [ItemId.Stick]: 3, [ItemId.Rope]: 1 } },
     { result: ItemId.Axe, ingredients: { [ItemId.Stick]: 2, [ItemId.Rope]: 2, [ItemId.Rock]: 1 } },
     { result: ItemId.Campfire, ingredients: { [ItemId.Stick]: 4, [ItemId.Log]: 3 } },
+    { result: ItemId.Bonfire, ingredients: { [ItemId.Rock]: 5 } },
 ];
 
 const ITEM_SPRITES: Record<ItemId, string> = {
@@ -107,7 +112,8 @@ const ITEM_SPRITES: Record<ItemId, string> = {
     [ItemId.DrinkablePot]: "/assets/items/pot_drinkable.png",
     [ItemId.UndrinkablePot]: "/assets/items/pot_undrinkable.png",
     [ItemId.Medkit]: "/assets/items/medkit.png",
-    [ItemId.Mango]: "/assets/items/mango.png"
+    [ItemId.Mango]: "/assets/items/mango.png",
+    [ItemId.Bonfire]: "/assets/entities/bonfire/base.png"
 };
 
 interface ItemAssets {
@@ -217,6 +223,11 @@ export class Item extends Entity {
             }
             const t = this.pickupProgress;
             this.position = this.startPos.lerp(player.position, t * t);
+        } else if (distSq < PICKUP_DISTANCE_SQ * 8 && !player.isDead && this.isOnWater()) {
+            this.highlighted = false;
+            this.pickingUp = true;
+            this.pickupProgress = 0;
+            this.startPos = this.position.clone();
         } else if (distSq < PICKUP_DISTANCE_SQ && !player.isDead) {
             this.highlighted = false;
             this.pickingUp = true;
@@ -225,6 +236,11 @@ export class Item extends Entity {
         } else {
             this.highlighted = distSq < HIGHLIGHT_DISTANCE_SQ;
         }
+    }
+
+    private isOnWater(): boolean {
+        const tile = this.world.getTile(Math.floor(this.position.x), Math.floor(this.position.y));
+        return tile instanceof NaturalTile && tile.wet;
     }
 
     draw(ctx: RenderContext): void {

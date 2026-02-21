@@ -13,7 +13,7 @@ export interface HintHandle {
 
 class HintEntity extends Entity {
   private host: Entity;
-  private text: string;
+  private lines: string[];
   private world: World;
   private offset: Vec2;
 
@@ -25,10 +25,10 @@ class HintEntity extends Entity {
   private static readonly POPUP_DURATION = 0.2;
   private static readonly DEPOP_DURATION = 0.15;
 
-  constructor(host: Entity, text: string, world: World, offset: Vec2) {
+  constructor(host: Entity, text: string | string[], world: World, offset: Vec2) {
     super(host.position.clone());
     this.host = host;
-    this.text = text;
+    this.lines = Array.isArray(text) ? text : [text];
     this.world = world;
     this.offset = offset;
     this.layer = 100;
@@ -85,12 +85,17 @@ class HintEntity extends Entity {
 
     const bob = Math.sin(this.totalTime * 2.5) * 0.04;
 
+    const lineHeight = 0.22;
+    const lineCount = this.lines.length;
+    const rectHeight = 0.3 + (lineCount - 1) * lineHeight;
+    const maxLineLen = Math.max(...this.lines.map(l => l.length));
+    const rectWidth = Math.max(1, maxLineLen * 0.08);
+
     // Hint is drawn above the host entity. The spike sits at the top of the entity,
     // and the dark rect + text sit above that.
     const baseY = this.position.y - 2;
     const spikeY = baseY + bob;
-    const rectY = baseY - 0.3 + bob;
-    const rectWidth = Math.max(1, this.text.length * 0.08);
+    const rectY = baseY - rectHeight + bob;
 
     ctx.setAlpha(alpha);
     ctx.pushTransform({
@@ -100,13 +105,15 @@ class HintEntity extends Entity {
 
     ctx.ctx.imageSmoothingEnabled = true;
     ctx.drawImage(txSpike, this.position.x - 0.125, spikeY, 0.25, 0.13);
-    ctx.fillRect(this.position.x - rectWidth / 2, rectY, rectWidth, 0.3, "rgba(0, 0, 0, 0.75)");
-    ctx.drawText(this.text, this.position.x, rectY - 0.08, {
-      align: "center",
-      baseline: "middle",
-      size: 0.15,
-      color: "white",
-    });
+    ctx.fillRect(this.position.x - rectWidth / 2, rectY, rectWidth, rectHeight, "rgba(0, 0, 0, 0.75)");
+    for (let i = 0; i < lineCount; i++) {
+      ctx.drawText(this.lines[i], this.position.x, rectY - 0.08 + i * lineHeight, {
+        align: "center",
+        baseline: "middle",
+        size: 0.15,
+        color: "white",
+      });
+    }
     ctx.ctx.imageSmoothingEnabled = false;
 
     ctx.popTransform();
@@ -116,7 +123,7 @@ class HintEntity extends Entity {
 
 export function attachHint(
   entity: Entity,
-  text: string,
+  text: string | string[],
   world: World,
   offset: Vec2 = Vec2.zero(),
 ): HintHandle {
