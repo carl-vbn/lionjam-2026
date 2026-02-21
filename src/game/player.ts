@@ -1,4 +1,4 @@
-import { Vec2, Entity, ParticleSystem, RenderContext, InputHandler, World } from "../engine/index.js";
+import { Vec2, Entity, ParticleSystem, RenderContext, InputHandler, World, attachHint } from "../engine/index.js";
 import { createWhiteSilhouette, getImage } from "../engine/image.js";
 import { NaturalTile } from "./tiles.js";
 import { dropItems, getItemAction, getItemSprite, ItemId } from "./items.js";
@@ -186,6 +186,17 @@ export class Player extends Entity {
       case ItemId.DrinkablePot:
         this.water = Math.min(100, this.water + 50);
         break;
+      case ItemId.Medkit:
+        this.health = 100;
+        ParticleSystem.getInstance().spawn({
+          sprite: getItemSprite(ItemId.Medkit),
+          count: 6,
+          position: this.position.add(new Vec2(0, -0.35)),
+          size: 0.2,
+          lifetime: 0.6,
+          speed: 1,
+        });
+        break;
       case ItemId.Campfire:
         const tileX = Math.floor(this.position.x);
         const tileY = Math.floor(this.position.y);
@@ -201,6 +212,7 @@ export class Player extends Entity {
   private _world: World;
   private generateSurroundings: (center: Vec2, radius: number) => void;
   private keyListenerRegistered = false;
+  private moveHintTimer = 2;
 
   constructor(
     position: Vec2,
@@ -332,6 +344,14 @@ export class Player extends Entity {
         if (key === "e" && down && !this.dead) this.useSelectedItem();
       });
       this.keyListenerRegistered = true;
+    }
+
+    if (this.moveHintTimer > 0) {
+      this.moveHintTimer -= _dt;
+      if (this.moveHintTimer <= 0) {
+        attachHint(this, "Use W, A, S, D to move", this._world, new Vec2(0, 0.5))
+          .destroyAfter(3);
+      }
     }
 
     if (this.flashTimer > 0) {

@@ -312,7 +312,8 @@ export class Suitcase extends Entity {
                 ItemId.MagGlass,
                 ItemId.Pot,
                 ItemId.Rope,
-                ItemId.Waterbottle
+                ItemId.Waterbottle,
+                ItemId.Medkit
             ]
             const dropCount = Math.random() < 0.5 ? 2 : 1;
             const items: {[key in ItemId]?: number} = {};
