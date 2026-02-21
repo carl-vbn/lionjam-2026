@@ -173,6 +173,10 @@ export class Player extends Entity {
         this.water = Math.min(100, this.water + 40);
         this.hunger = Math.min(100, this.hunger + 10);
         break;
+      case ItemId.Mango:
+        this.hunger = Math.min(100, this.hunger + 30);
+        this.water = Math.min(100, this.water + 10);
+        break;
       case ItemId.CookedMeat:
         this.hunger = Math.min(100, this.hunger + 40);
         this.water = Math.max(0, this.water - 5);

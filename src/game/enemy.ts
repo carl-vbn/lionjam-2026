@@ -38,7 +38,7 @@ createOutlinedImage(txAttack, 2, "red").then((img) => { outlinedAssets.attack = 
 createWhiteSilhouette(txIdle).then((img) => { whiteAssets.idle = img; });
 createWhiteSilhouette(txAttack).then((img) => { whiteAssets.attack = img; });
 
-const AGGRO_RANGE = 5;
+const AGGRO_RANGE = 3.5;
 const AGGRO_RANGE_SQ = AGGRO_RANGE * AGGRO_RANGE;
 const DISABLE_DISTANCE = 16;
 const DISABLE_DISTANCE_SQ = DISABLE_DISTANCE * DISABLE_DISTANCE;

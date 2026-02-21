@@ -2,9 +2,9 @@ import noise from "../engine/perlin.js";
 import { Vec2 } from "../engine/vec2.js";
 import { World } from "../engine/world.js";
 import { Item, ItemId } from "./items.js";
-import { GrassTile, NaturalTile, SandTile, StoneTile, WaterTile } from "./tiles.js";
+import { GrassTile, NaturalTile, SandTile, GroundTile, WaterTile } from "./tiles.js";
 import { Enemy } from "./enemy.js";
-import { Bush, Jetwreck, PalmTree, Shipwreck, Suitcase, Tallgrass } from "./trees.js";
+import { Bush, Jetwreck, MangoTree, PalmTree, Shipwreck, Suitcase, Tallgrass } from "./trees.js";
 
 // A reserved tile is one that has not yet been generated, but where no new
 // entity may be spawned when the tile is generated
@@ -105,6 +105,8 @@ export function generateTile(world: World, x: number, y: number): NaturalTile | 
             world.addEntity(new Item(new Vec2(x + 0.5, y + 0.5), world, Math.random() < 0.3 ? ItemId.Rock : ItemId.Stick));
         } else if (dryness > 0.3 && dryness < 1.2 && Math.random() < 0.05 * (-y / 100)) {
             world.addEntity(new PalmTree(new Vec2(x + 0.5, y + 0.5), Math.random() < 0.2, world));
+        } else if (dryness > 0.6 && dryness < 1.2 && Math.random() < 0.03 * (-y / 100)) {
+            world.addEntity(new MangoTree(new Vec2(x + 0.5, y + 0.5), Math.random() < 0.3, world));
         } else if (dryness > 0.2 && dryness < 1.2 && Math.random() < 0.04 * (-y / 50)) {
             world.addEntity(new Bush(new Vec2(x + 0.5, y + 0.5).add(subTileOffset())));
         } else if (dryness > 0.8 && dryness < 1.2 && Math.random() < Math.max(0.5, 0.05 * (-y / 50))) {
@@ -141,6 +143,6 @@ export function generateTile(world: World, x: number, y: number): NaturalTile | 
     } else if (dryness < 1.2) {
         return new GrassTile(world, x, y);
     } else {
-        return new StoneTile(world, x, y);
+        return new GroundTile(world, x, y);
     }
 }

@@ -9,8 +9,10 @@ const txTallgrassLong = getImage("/assets/entities/tallgrass/long.png");
 const txTallgrassShort = getImage("/assets/entities/tallgrass/short.png");
 
 let shakeHintShown = false;
+let mangoShakeHintShown = false;
 let lootHintShown = false;
 let chopHintShown = false;
+let mangoChopHintShown = false;
 
 const palmTreeAssets = {
     normal: new Flipbook("/assets/entities/palmtree/palm.png", 2, 0.75),
@@ -150,6 +152,143 @@ export class PalmTree extends Entity {
             this.hintHandle = null;
         }
 
+    }
+}
+
+const mangoTreeAssets = {
+    normal: new Flipbook("/assets/entities/mangotree/mangotree.png", 2, 0.75),
+    normalHighlighted: new Flipbook("/assets/entities/mangotree/mangotree.png", 2, 0.75, { width: 2, color: "cyan" }),
+    normalSelected: new Flipbook("/assets/entities/mangotree/mangotree.png", 2, 0.75, { width: 2, color: "lime" }),
+    mangoes: new Flipbook("/assets/entities/mangotree/mangotree_mango.png", 2, 0.75),
+    mangoesHighlighted: new Flipbook("/assets/entities/mangotree/mangotree_mango.png", 2, 0.75, { width: 2, color: "cyan" }),
+    mangoesSelected: new Flipbook("/assets/entities/mangotree/mangotree_mango.png", 2, 0.75, { width: 2, color: "lime" }),
+    silhouette: new Image(),
+};
+
+createWhiteSilhouette(getImage("/assets/entities/mangotree/mangotree.png")).then((silhouette) => {
+    mangoTreeAssets.silhouette = silhouette;
+});
+
+export class MangoTree extends Entity {
+    hasMangoes = false;
+    highlighted = false;
+    chopHighlighted = false;
+    destroyed = false;
+    flashTimer = 0;
+    private world: World;
+    private hintHandle: HintHandle | null = null;
+
+    constructor(position: Vec2, hasMangoes: boolean, world: World) {
+        super(position);
+        this.layer = 1;
+        this.size = new Vec2(1.75, 5.25);
+        this.hasMangoes = hasMangoes;
+        this.world = world;
+    }
+
+    get clickable(): boolean {
+        return this.highlighted || this.chopHighlighted;
+    }
+
+    getParticleSource(): ParticleSource | null {
+        const img = mangoTreeAssets.mangoes.image;
+        if (!mangoTreeAssets.mangoes.loaded) return null;
+        const fw = mangoTreeAssets.mangoes.frameWidth;
+        const fh = mangoTreeAssets.mangoes.frameHeight;
+        return { image: img, sx: 0, sy: 0, sw: fw, sh: fh };
+    }
+
+    draw(ctx: RenderContext): void {
+        if (this.destroyed) return;
+
+        ctx.fillEllipse(this.position.x, this.position.y - 0.25, 0.875, 0.4375, "rgba(0, 0, 0, 0.25)");
+
+        if (this.flashTimer > 0) {
+            ctx.drawImageRegion(mangoTreeAssets.silhouette, 0, 0, mangoTreeAssets.silhouette.naturalWidth / 2, mangoTreeAssets.silhouette.naturalHeight, this.position.x - 1.75, this.position.y - 3.5, 3.5, 3.5);
+        } else {
+            const { worldPos: mousePos } = InputHandler.getInstance().getMousePos();
+            const hovered = Math.abs(mousePos.x - this.position.x) < 1.05 && mousePos.y < this.position.y && mousePos.y > this.position.y - 3.5;
+
+            let flipbook;
+            if (this.chopHighlighted) {
+                if (this.hasMangoes) {
+                    flipbook = hovered ? mangoTreeAssets.mangoesSelected : mangoTreeAssets.mangoesHighlighted;
+                } else {
+                    flipbook = hovered ? mangoTreeAssets.normalSelected : mangoTreeAssets.normalHighlighted;
+                }
+            } else {
+                flipbook = this.highlighted
+                    ? hovered ? mangoTreeAssets.mangoesSelected : mangoTreeAssets.mangoesHighlighted
+                    : this.hasMangoes ? mangoTreeAssets.mangoes : mangoTreeAssets.normal;
+            }
+            ctx.drawFlipbook(flipbook, this.position.x - 1.75, this.position.y - 3.5, 3.5, 3.5);
+        }
+    }
+
+    onClick(_worldPos: Vec2): void {
+        if (this.chopHighlighted) {
+            this.flashTimer = 0.2;
+
+            if (this.hasMangoes) {
+                const mangoCount = 1 + Math.floor(Math.random() * 3);
+                dropItems(this.world, this.position, { [ItemId.Mango]: mangoCount });
+            }
+
+            const logCount = 1 + Math.floor(Math.random() * 3);
+            dropItems(this.world, this.position, { [ItemId.Log]: logCount });
+
+            if (this.hintHandle) {
+                this.hintHandle.destroy();
+                this.hintHandle = null;
+            }
+            this.destroyed = true;
+        } else if (this.hasMangoes && this.highlighted) {
+            this.hasMangoes = false;
+            this.flashTimer = 0.2;
+
+            const count = 1 + Math.floor(Math.random() * 3);
+            dropItems(this.world, this.position, { [ItemId.Mango]: count });
+        }
+    }
+
+    update(dt: number): void {
+        if (this.destroyed) {
+            this.world.removeEntity(this);
+            return;
+        }
+
+        if (this.flashTimer > 0) {
+            this.flashTimer -= dt;
+            if (this.flashTimer < 0) this.flashTimer = 0;
+        }
+
+        const player = Player.getInstance();
+        const near = player.position.distanceSquaredTo(this.position) < 16;
+        const slot = getSelectedSlot();
+        const holdingAxe = near && slot >= 0 && slot < player.inventory.length && player.inventory[slot].item === ItemId.Axe;
+
+        const prevChopHighlighted = this.chopHighlighted;
+        const prevHighlighted = this.highlighted;
+
+        this.chopHighlighted = holdingAxe;
+        this.highlighted = near && this.hasMangoes && !holdingAxe;
+
+        const anyHighlighted = this.highlighted || this.chopHighlighted;
+        const prevAnyHighlighted = prevHighlighted || prevChopHighlighted;
+
+        if (this.chopHighlighted && !prevChopHighlighted) {
+            if (this.hintHandle) { this.hintHandle.destroy(); this.hintHandle = null; }
+            if (!mangoChopHintShown) {
+                this.hintHandle = attachHint(this, "Chop", this.world);
+                mangoChopHintShown = true;
+            }
+        } else if (this.highlighted && !prevHighlighted && !mangoShakeHintShown) {
+            this.hintHandle = attachHint(this, "Shake", this.world);
+            mangoShakeHintShown = true;
+        } else if (!anyHighlighted && prevAnyHighlighted && this.hintHandle) {
+            this.hintHandle.destroy();
+            this.hintHandle = null;
+        }
     }
 }
 

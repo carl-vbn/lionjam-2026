@@ -48,16 +48,53 @@ export class GrassTile extends NaturalTile {
     }
 }
 
-export class StoneTile extends NaturalTile {
+const txGround = getImage("/assets/tiles/ground.png");
+
+export class GroundTile extends NaturalTile {
     get material(): string {
-        return "stone";
+        return "ground";
+    }
+
+    private neighborMaterial(dx: number, dy: number): string | undefined {
+        const tile = this.world.getTile(this.position.x + dx, this.position.y + dy);
+        return tile instanceof NaturalTile ? tile.material : undefined;
+    }
+
+    private drawRotatedImage(ctx: RenderContext, image: HTMLImageElement, rotation: number): void {
+        if (rotation === 0) {
+            ctx.drawImage(image, 0, 0, 1, 1);
+        } else {
+            ctx.pushTransform({ rotation, center: new Vec2(0.5, 0.5) });
+            ctx.drawImage(image, 0, 0, 1, 1);
+            ctx.popTransform();
+        }
     }
 
     draw(ctx: RenderContext): void {
-        ctx.fillRect(0, 0, 1, 1, "#888888");
-        ctx.fillRect(0.1, 0.1, 0.35, 0.35, "#777777");
-        ctx.fillRect(0.55, 0.5, 0.35, 0.4, "#777777");
-        ctx.strokeRect(0, 0, 1, 1, "#666666", 0.03);
+        ctx.drawImage(txGround, 0, 0, 1, 1);
+
+        const grassTop = this.neighborMaterial(0, -1) === "grass";
+        const grassBottom = this.neighborMaterial(0, 1) === "grass";
+        const grassLeft = this.neighborMaterial(-1, 0) === "grass";
+        const grassRight = this.neighborMaterial(1, 0) === "grass";
+
+        // Edge overlays
+        if (grassTop)    this.drawRotatedImage(ctx, txGrassWave, 0);
+        if (grassRight)  this.drawRotatedImage(ctx, txGrassWave, Math.PI / 2);
+        if (grassBottom) this.drawRotatedImage(ctx, txGrassWave, Math.PI);
+        if (grassLeft)   this.drawRotatedImage(ctx, txGrassWave, -Math.PI / 2);
+
+        // Inner corners (two adjacent edges have grass)
+        if (grassTop && grassRight)    this.drawRotatedImage(ctx, txGrassInnerCorner, 0);
+        if (grassRight && grassBottom) this.drawRotatedImage(ctx, txGrassInnerCorner, Math.PI / 2);
+        if (grassBottom && grassLeft)  this.drawRotatedImage(ctx, txGrassInnerCorner, Math.PI);
+        if (grassTop && grassLeft)     this.drawRotatedImage(ctx, txGrassInnerCorner, -Math.PI / 2);
+
+        // Outer corners (diagonal has grass, but neither adjacent cardinal does)
+        if (this.neighborMaterial(-1, -1) === "grass" && !grassTop && !grassLeft)      this.drawRotatedImage(ctx, txGrassCorner, 0);
+        if (this.neighborMaterial(1, -1) === "grass" && !grassTop && !grassRight)       this.drawRotatedImage(ctx, txGrassCorner, Math.PI / 2);
+        if (this.neighborMaterial(1, 1) === "grass" && !grassBottom && !grassRight)     this.drawRotatedImage(ctx, txGrassCorner, Math.PI);
+        if (this.neighborMaterial(-1, 1) === "grass" && !grassBottom && !grassLeft)     this.drawRotatedImage(ctx, txGrassCorner, -Math.PI / 2);
     }
 }
 
