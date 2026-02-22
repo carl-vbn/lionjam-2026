@@ -127,9 +127,12 @@ input.onMouse((e) => {
 
 // --- Game loop ---
 let gameStarted = true;
+let gameEnded = false;
 let musicUpdateTimer = 0;
 
 const loop = createGameLoop((dt) => {
+  if (gameEnded) return;
+
   if (!gameStarted) {
     drawPreGameScreen(ctx, dt);
     return;
@@ -184,6 +187,8 @@ player.setEndGameListener(() => {
     seaAmbianceAudio.currentTime = 0;
   }
 
+  gameEnded = true;
+
   // Show ending video
   const endingVideo = document.getElementById("ending-video") as HTMLVideoElement;
   endingVideo.style.display = "block";
@@ -220,7 +225,7 @@ window.addEventListener("click", () => {
 });
 
 window.addEventListener("beforeunload", (e) => {
-  if (gameStarted) {
+  if (gameStarted && !gameEnded) {
     e.preventDefault();
   }
 });

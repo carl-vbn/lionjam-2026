@@ -1,6 +1,7 @@
 import { Camera, createOutlinedImage, getImage, InputHandler, RenderContext, Vec2, World } from "../engine/index.js";
 import { getItemAction, getItemDisplayName, getItemSprite, ItemId, Recipe, RECIPES } from "./items.js";
 import { InventorySlot, Player } from "./player.js";
+import { sounds } from "./sounds.js";
 
 const txHealthbar = getImage("assets/ui/bars/health.png");
 const txWaterbar = getImage("assets/ui/bars/water.png");
@@ -155,6 +156,9 @@ export function handleUIClick(screenPos: Vec2, screenWidth: number, screenHeight
                     }
                 }
                 player.addItem(recipe.result);
+                sounds.loot.play();
+                const slotIndex = player.inventory.findIndex(s => s.item === recipe.result);
+                if (slotIndex >= 0) setSelectedSlot(slotIndex);
             }
             return true;
         }
@@ -286,9 +290,9 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
     if (selectedSlot >= 0 && selectedSlot < player.inventory.length) {
         const item = player.inventory[selectedSlot].item;
         const name = getItemDisplayName(item);
-        drawShadowedText(ctx, name, ctx.width - 50, ctx.height - 110, {
+        drawShadowedText(ctx, name, ctx.width - 48, ctx.height - 110, {
             font: "monospace",
-            size: 14,
+            size: 18,
             align: "right" as CanvasTextAlign,
             baseline: "alphabetic" as CanvasTextBaseline,
         });

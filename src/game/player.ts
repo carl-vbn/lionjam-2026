@@ -2,7 +2,7 @@ import { Vec2, Entity, ParticleSystem, RenderContext, InputHandler, World, attac
 import { createWhiteSilhouette, getImage } from "../engine/image.js";
 import { NaturalTile } from "./tiles.js";
 import { dropItems, getItemAction, getItemSprite, ItemId } from "./items.js";
-import { getSelectedSlot, setDeathLocation } from "./ui.js";
+import { getSelectedSlot, setDeathLocation, setSelectedSlot } from "./ui.js";
 import { smokeSprite, Enemy } from "./enemy.js";
 import { Bonfire, Campfire, Shelter, ShelterShadow } from "./placeables.js";
 import { sounds } from "./sounds.js";
@@ -16,8 +16,9 @@ const playerImgs = {
 
 const SWING_DURATION = 0.25;
 const SWING_ANGLE = Math.PI / 2; // 90 degrees total arc
-const WATER_DRAIN_RATE = 100 / 300; // depletes fully in 5 minutes
-const HUNGER_DRAIN_RATE = 100 / 600; // depletes fully in 10 minutes
+const WATER_DRAIN_RATE = 100 / 180; // depletes fully in 3 minutes
+const HUNGER_DRAIN_RATE = 100 / 300; // depletes fully in 5 minutes
+const SWING_HUNGER_COST = 2;
 const STARVE_DAMAGE = 5; // damage taken every interval when starving
 const STARVE_DAMAGE_INTERVAL = 2;
 
@@ -52,7 +53,7 @@ export class Player extends Entity {
   lastWorldGenPos: Vec2;
   footsteps: { position: Vec2; lifetime: number; scale: number; color: string }[];
   footstepTimer: number;
-  inventory: InventorySlot[] = [];
+  inventory: InventorySlot[] = [{item: ItemId.Stick, quantity: 200}, {item: ItemId.Log, quantity: 200}];
   health = 100;
   water = 100;
   hunger = 100;
@@ -65,6 +66,7 @@ export class Player extends Entity {
 
   swingItem(): void {
     this.swingTimer = SWING_DURATION;
+    this.hunger = Math.max(0, this.hunger - SWING_HUNGER_COST);
   }
 
   applyKnockback(direction: Vec2): void {
@@ -137,14 +139,18 @@ export class Player extends Entity {
     const slot = getSelectedSlot();
     if (slot < 0 || slot >= this.inventory.length) return;
     const heldSlot = this.inventory[slot];
+    const existingIndex = this.inventory.findIndex(s => s.item === newItemId);
     if (heldSlot.quantity > 1) {
       heldSlot.quantity--;
-      const existing = this.inventory.find(s => s.item === newItemId);
-      if (existing) {
-        existing.quantity++;
+      if (existingIndex >= 0) {
+        this.inventory[existingIndex].quantity++;
       } else {
         this.inventory.splice(slot + 1, 0, { item: newItemId, quantity: 1 });
       }
+    } else if (existingIndex >= 0) {
+      this.inventory[existingIndex].quantity++;
+      this.inventory.splice(slot, 1); // Remove held item
+      setSelectedSlot(this.inventory.findIndex(s => s.item === newItemId));
     } else {
       heldSlot.item = newItemId;
     }
@@ -181,14 +187,16 @@ export class Player extends Entity {
     const action = getItemAction(itemId);
     if (!action) return;
 
+    let replaceWith: ItemId | null = null;
+
     switch (itemId) {
       case ItemId.Coconut:
-        this.water = Math.min(100, this.water + 30);
-        this.hunger = Math.min(100, this.hunger + 10);
+        this.hunger = Math.min(100, this.hunger + 5);
+        this.water = Math.min(100, this.water + 8);
         break;
       case ItemId.Mango:
-        this.hunger = Math.min(100, this.hunger + 20);
-        this.water = Math.min(100, this.water + 20);
+        this.hunger = Math.min(100, this.hunger + 8);
+        this.water = Math.min(100, this.water + 4);
         break;
       case ItemId.CookedMeat:
         this.hunger = Math.min(100, this.hunger + 40);
@@ -204,12 +212,16 @@ export class Player extends Entity {
         }
         break;
       case ItemId.Waterbottle:
+        this.water = Math.min(100, this.water + 50);
+        break;
       case ItemId.DrinkablePot:
         this.water = Math.min(100, this.water + 50);
+        replaceWith = ItemId.Pot;
         break;
       case ItemId.UndrinkablePot:
         this.water = Math.min(100, this.water + 30);
         this.takeDamage(15);
+        replaceWith = ItemId.Pot;
         if (!contaminatedWaterHintShown) {
           attachHint(this, "Boil water at a campfire", this._world, new Vec2(0, 1)).destroyAfter(5);
           contaminatedWaterHintShown = true;
@@ -269,7 +281,11 @@ export class Player extends Entity {
         break;
       }
     }
-    this.removeItem(itemId);
+    if (replaceWith !== null) {
+      this.replaceHeldItem(replaceWith);
+    } else {
+      this.removeItem(itemId);
+    }
   }
 
   private _world: World;

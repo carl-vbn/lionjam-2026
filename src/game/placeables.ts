@@ -129,7 +129,7 @@ createOutlinedImage(txBonfireBase, 2, "orange").then((o) => { txBonfireBaseOutli
 
 const txBonfireStages: HTMLImageElement[] = [];
 const txBonfireStagesOutlined: HTMLImageElement[] = [];
-for (let i = 1; i <= 7; i++) {
+for (let i = 1; i <= 6; i++) {
     const img = getImage(`assets/entities/bonfire/stage${i}.png`);
     txBonfireStages.push(img);
     txBonfireStagesOutlined.push(img); // placeholder
@@ -160,12 +160,11 @@ function getBonfireStageCosts(): StageCost[] {
     if (!_bonfireStageCosts) {
         _bonfireStageCosts = [
             { items: { [ItemId.Stick]: 5 } },                              // stage 0 -> 1
-            { items: { [ItemId.Log]: 6 } },                              // stage 1 -> 2
-            { items: { [ItemId.Stick]: 10} },                                // stage 2 -> 3
-            { items: { [ItemId.Log]: 8 } },                                // stage 3 -> 4
-            { items: { [ItemId.Stick]: 16 } },            // stage 4 -> 5
-            { items: { [ItemId.Log]: 20 } },            // stage 5 -> 6
-            { items: { [ItemId.Log]: 30 } },            // stage 6 -> 7
+            { items: { [ItemId.Log]: 8 } },                              // stage 1 -> 2
+            { items: { [ItemId.Stick]: 12} },                                // stage 2 -> 3
+            { items: { [ItemId.Log]: 15 } },                                // stage 3 -> 4
+            { items: { [ItemId.Stick]: 18 } },            // stage 4 -> 5
+            { items: { [ItemId.Log]: 30 } },            // stage 5 -> 6
         ];
     }
     return _bonfireStageCosts;
@@ -186,21 +185,27 @@ export class Bonfire extends Entity {
     world: World;
     private fireTimer = 0;
     private hintHandle: HintHandle | null = null;
+    private lastHintKey: string | null = null;
 
     constructor(position: Vec2, world: World) {
         super(position);
         this.world = world;
+        this.size = new Vec2(5, 3);
     }
 
     private showHint(text: string | string[]): void {
-        if (this.hintHandle) return;
+        const key = Array.isArray(text) ? text.join("|") : text;
+        if (this.hintHandle && this.lastHintKey === key) return;
+        this.clearHint();
         this.hintHandle = attachHint(this, text, this.world, new Vec2(0, 0));
+        this.lastHintKey = key;
     }
 
     private clearHint(): void {
         if (this.hintHandle) {
             this.hintHandle.destroy();
             this.hintHandle = null;
+            this.lastHintKey = null;
         }
     }
 
@@ -210,12 +215,17 @@ export class Bonfire extends Entity {
         const player = Player.getInstance();
         const playerIsClose = player.position.distanceSquaredTo(this.position) < 16;
 
-        if (this.stage < 7 && playerIsClose) {
+        if (this.stage < 6 && playerIsClose) {
             this.highlighted = true;
             this.showHint(formatCost(getBonfireStageCosts()[this.stage]));
-        } else if (this.stage === 7 && !this.lit && playerIsClose && player.isHolding(ItemId.MagGlass)) {
-            this.highlighted = true;
-            this.showHint("Light");
+        } else if (this.stage === 6 && !this.lit && playerIsClose) {
+            if (player.isHolding(ItemId.MagGlass)) {
+                this.highlighted = true;
+                this.showHint("Light");
+            } else {
+                this.highlighted = false;
+                this.showHint("Ready to light");
+            }
         } else {
             this.highlighted = false;
             this.clearHint();
@@ -227,7 +237,7 @@ export class Bonfire extends Entity {
 
         const player = Player.getInstance();
 
-        if (this.stage < 7) {
+        if (this.stage < 6) {
             const cost = getBonfireStageCosts()[this.stage];
             // Check player has all required items
             for (const [id, needed] of Object.entries(cost.items) as [ItemId, number][]) {
@@ -240,7 +250,7 @@ export class Bonfire extends Entity {
             }
             this.stage++;
             this.clearHint();
-        } else if (this.stage === 7 && !this.lit && player.isHolding(ItemId.MagGlass)) {
+        } else if (this.stage === 6 && !this.lit && player.isHolding(ItemId.MagGlass)) {
             player.endGame();
         }
     }
@@ -256,7 +266,7 @@ export class Bonfire extends Entity {
 
         ctx.drawImage(img, this.position.x - 2.5, this.position.y - 5, 5, 5);
 
-        if (this.stage === 7 && this.lit) {
+        if (this.stage === 6 && this.lit) {
             const frameIndex = Math.floor(this.fireTimer / BONFIRE_FIRE_INTERVAL) % 4;
             const fireImg = this.highlighted ? txBonfireFireOutlined[frameIndex] : txBonfireFire[frameIndex];
             ctx.drawImage(fireImg, this.position.x - 2.5, this.position.y - 5, 5, 5);

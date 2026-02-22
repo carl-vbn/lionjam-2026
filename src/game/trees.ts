@@ -95,7 +95,7 @@ export class PalmTree extends Entity {
             
             const drops: Partial<Record<ItemId, number>> = {};
             if (this.hasCoconuts) {
-                const coconutCount = 1 + Math.floor(Math.random() * 3);
+                const coconutCount = 1 + Math.floor(Math.random() * 2);
                 drops[ItemId.Coconut] = coconutCount;
             }
 
@@ -114,8 +114,8 @@ export class PalmTree extends Entity {
             this.flashTimer = 0.2;
             sounds.treeshake.play();
 
-            // Spawn 1-3 coconut items around the base
-            const count = 1 + Math.floor(Math.random() * 3);
+            // Spawn 1-2 coconut items around the base
+            const count = 1 + Math.floor(Math.random() * 2);
             dropItems(this.world, this.position, { [ItemId.Coconut]: count });
         }
     }
@@ -241,7 +241,7 @@ export class MangoTree extends Entity {
             const drops: Partial<Record<ItemId, number>> = {};
 
             if (this.hasMangoes) {
-                const mangoCount = 1 + Math.floor(Math.random() * 3);
+                const mangoCount = 1 + Math.floor(Math.random() * 2);
                 drops[ItemId.Mango] = mangoCount;
             }
 
@@ -262,7 +262,7 @@ export class MangoTree extends Entity {
             this.flashTimer = 0.2;
             sounds.treeshake.play();
 
-            const count = 1 + Math.floor(Math.random() * 3);
+            const count = 1 + Math.floor(Math.random() * 2);
             dropItems(this.world, this.position, { [ItemId.Mango]: count });
         }
     }
@@ -469,9 +469,13 @@ export class Suitcase extends Entity {
                 ItemId.MagGlass,
                 ItemId.Pot,
                 ItemId.Rope,
-                ItemId.Waterbottle,
-                ItemId.Medkit
+                ItemId.Waterbottle
             ]
+
+            if (Math.random() < 0.5) {
+                possibleItems.push(ItemId.Medkit);
+            }
+
             const dropCount = Math.random() < 0.5 ? 2 : 1;
             const items: {[key in ItemId]?: number} = {};
 
