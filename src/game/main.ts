@@ -215,4 +215,10 @@ window.addEventListener("click", () => {
   }
 });
 
+window.addEventListener("beforeunload", (e) => {
+  if (gameStarted) {
+    e.preventDefault();
+  }
+});
+
 loop.start();
