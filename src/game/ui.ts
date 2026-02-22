@@ -25,6 +25,15 @@ interface CompassTarget { name: string; position: Vec2; }
 const shelterTargets: CompassTarget[] = [];
 let deathLocation: Vec2 | null = null;
 let selectedTargetIndex = 0;
+let openNote: string | null = null;
+
+export function setOpenNote(text: string | null): void {
+    openNote = text;
+}
+
+export function hasOpenNote(): boolean {
+    return openNote !== null;
+}
 
 function getCompassTargets(): CompassTarget[] {
     const targets: CompassTarget[] = [{ name: "Crash site", position: new Vec2(0, 0) }];
@@ -141,6 +150,18 @@ function getItemCount(player: Player, itemId: ItemId): number {
 export function handleUIClick(screenPos: Vec2, screenWidth: number, screenHeight: number): boolean {
     const player = Player.getInstance();
 
+    // Note overlay — absorbs all clicks; close button clears the note
+    if (openNote) {
+        const btnSize = 32;
+        const btnX = screenWidth / 2 - txButtonLong.width / 2;
+        const btnY = screenHeight / 2 + 200;
+        if (screenPos.x >= btnX && screenPos.x <= btnX + btnSize * 2 &&
+            screenPos.y >= btnY && screenPos.y <= btnY + btnSize) {
+            openNote = null;
+        }
+        return true;
+    }
+
     // Check crafting buttons
     for (let i = 0; i < RECIPES.length; i++) {
         const btnX = 33 + (i % 3) * 58;
@@ -215,10 +236,50 @@ export function handleUIClick(screenPos: Vec2, screenWidth: number, screenHeight
     return false;
 }
 
+const txNote = getImage("assets/ui/note.png");
+export function drawNote(ctx: RenderContext, text: string) {
+    // Full screen overlay
+    ctx.fillRect(0, 0, ctx.width, ctx.height, "rgba(0, 0, 0, 0.75)");
+
+    ctx.drawImage(txNote, ctx.width / 2 - 300, ctx.height / 2 - 300, 600, 600);
+    
+    const lines = text.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+        ctx.drawText(lines[i], ctx.width / 2 - 20, ctx.height / 2 - 150 + i * 24, {
+            font: "monospace",
+            size: 14,
+            color: "#000000",
+            align: "center" as CanvasTextAlign,
+            baseline: "alphabetic" as CanvasTextBaseline,
+        });
+    }
+    
+    // Draw close button
+    const btnX = ctx.width / 2 - txButtonLong.width / 2;
+    const btnY = ctx.height / 2 + 200;
+    const btnSize = 32;
+    ctx.drawImage(txButtonLong, btnX, btnY, btnSize * 2, btnSize);
+    ctx.fillRect(btnX, btnY, btnSize * 2, btnSize, "rgba(0, 0, 0, 0.1)");
+    ctx.drawText("Close", btnX + btnSize, btnY + btnSize / 2 + 1, {
+        font: "monospace",
+        size: 14,
+        color: "#ffffff",
+        align: "center" as CanvasTextAlign,
+        baseline: "middle" as CanvasTextBaseline,
+    });
+
+    // Button hover effect
+    const mousePos = InputHandler.getInstance()!.getMousePos().screenPos;
+    if (mousePos.x >= btnX && mousePos.x <= btnX + btnSize * 2 &&
+        mousePos.y >= btnY && mousePos.y <= btnY + btnSize) {
+        ctx.fillRect(btnX, btnY, btnSize * 2, btnSize, "rgba(0, 0, 0, 0.1)");
+    }
+}
+
 const fpsHistory: number[] = [];
 let fpsHistoryTime = 0;
 
-export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
+export function drawHUD(ctx: RenderContext, dt: number, _camera: Camera) {
     fpsHistory.push(dt);
     fpsHistoryTime += dt;
     while (fpsHistoryTime - fpsHistory[0] > 10) {
@@ -367,6 +428,10 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
                 baseline: "alphabetic" as CanvasTextBaseline,
             });
         }
+    }
+
+    if (openNote) {
+        drawNote(ctx, openNote);
     }
 }
 

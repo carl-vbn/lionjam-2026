@@ -1,8 +1,9 @@
 import { attachHint, Entity, Flipbook, HintHandle, InputHandler, ParticleSource, ParticleSystem, RenderContext, Vec2, World } from "../engine/index.js";
 import { createOutlinedImage, createWhiteSilhouette, getImage } from "../engine/image.js";
 import { dropItems, ItemId } from "./items.js";
+import { openNextNote, releaseNote, tryClaimNote } from "./notes.js";
 import { Player } from "./player.js";
-import { getSelectedSlot } from "./ui.js";
+import { getSelectedSlot, setOpenNote } from "./ui.js";
 import { sounds } from "./sounds.js";
 
 const fpBush = new Flipbook("assets/entities/bush.png", 2, 0.75);
@@ -29,12 +30,18 @@ createWhiteSilhouette(getImage("assets/entities/palmtree/palm.png")).then((silho
     palmTreeAssets.silhouette = silhouette;
 });
 
+const txTreeNote = getImage("assets/entities/notes/note_tree.png");
+let txTreeNoteOutlined: HTMLImageElement = txTreeNote;
+createOutlinedImage(txTreeNote, 2, "cyan").then((img) => { txTreeNoteOutlined = img; });
+
 export class PalmTree extends Entity {
     hasCoconuts = false;
     highlighted = false;
     chopHighlighted = false;
+    noteHighlighted = false;
     destroyed = false;
     flashTimer = 0;
+    hasNote = false;
     private world: World;
     private hintHandle: HintHandle | null = null;
 
@@ -44,10 +51,11 @@ export class PalmTree extends Entity {
         this.size = new Vec2(1, 3);
         this.hasCoconuts = hasCoconuts;
         this.world = world;
+        this.hasNote = tryClaimNote(position.lengthSquared());
     }
 
     get clickable(): boolean {
-        return this.highlighted || this.chopHighlighted;
+        return this.highlighted || this.chopHighlighted || this.noteHighlighted;
     }
 
     getParticleSource(): ParticleSource | null {
@@ -83,11 +91,28 @@ export class PalmTree extends Entity {
                     : this.hasCoconuts ? palmTreeAssets.coconuts : palmTreeAssets.normal;
             }
             ctx.drawFlipbook(flipbook, this.position.x - 1, this.position.y - 2, 2, 2);
+
+            if (this.hasNote) {
+                const noteTx = this.noteHighlighted ? txTreeNoteOutlined : txTreeNote;
+                const baseW = 0.2, baseH = 0.2, baseX = this.position.x - 0.15, baseY = this.position.y - 0.8;
+                if (noteTx !== txTreeNote && txTreeNote.naturalWidth > 0) {
+                    const scale = noteTx.naturalWidth / txTreeNote.naturalWidth;
+                    const w = baseW * scale, h = baseH * scale;
+                    ctx.drawImage(noteTx, baseX - (w - baseW) / 2, baseY - (h - baseH) / 2, w, h);
+                } else {
+                    ctx.drawImage(noteTx, baseX, baseY, baseW, baseH);
+                }
+            }
         }
 
     }
 
     onClick(_worldPos: Vec2): void {
+        if (this.hasNote && this.noteHighlighted) {
+            this.hasNote = false;
+            setOpenNote(openNextNote());
+            return;
+        }
         if (this.chopHighlighted) {
             Player.getInstance().swingItem();
             this.flashTimer = 0.2;
@@ -136,9 +161,26 @@ export class PalmTree extends Entity {
         const slot = getSelectedSlot();
         const holdingAxe = near && slot >= 0 && slot < player.inventory.length && player.inventory[slot].item === ItemId.Axe;
 
+        if (this.hasNote && player.position.distanceSquaredTo(this.position) > 30 * 30) {
+            this.hasNote = false;
+            releaseNote();
+        }
+
         const prevChopHighlighted = this.chopHighlighted;
         const prevHighlighted = this.highlighted;
 
+        if (this.hasNote) {
+            this.noteHighlighted = near;
+            this.chopHighlighted = false;
+            this.highlighted = false;
+            if ((prevChopHighlighted || prevHighlighted) && this.hintHandle) {
+                this.hintHandle.destroy();
+                this.hintHandle = null;
+            }
+            return;
+        }
+
+        this.noteHighlighted = false;
         this.chopHighlighted = holdingAxe;
         this.highlighted = near && this.hasCoconuts && !holdingAxe;
 
@@ -180,8 +222,10 @@ export class MangoTree extends Entity {
     hasMangoes = false;
     highlighted = false;
     chopHighlighted = false;
+    noteHighlighted = false;
     destroyed = false;
     flashTimer = 0;
+    hasNote = false;
     private world: World;
     private hintHandle: HintHandle | null = null;
 
@@ -191,10 +235,11 @@ export class MangoTree extends Entity {
         this.size = new Vec2(1.75, 5.25);
         this.hasMangoes = hasMangoes;
         this.world = world;
+        this.hasNote = tryClaimNote(position.lengthSquared());
     }
 
     get clickable(): boolean {
-        return this.highlighted || this.chopHighlighted;
+        return this.highlighted || this.chopHighlighted || this.noteHighlighted;
     }
 
     getParticleSource(): ParticleSource | null {
@@ -229,10 +274,27 @@ export class MangoTree extends Entity {
                     : this.hasMangoes ? mangoTreeAssets.mangoes : mangoTreeAssets.normal;
             }
             ctx.drawFlipbook(flipbook, this.position.x - 1.75, this.position.y - 3.5, 3.5, 3.5);
+
+            if (this.hasNote) {
+                const noteTx = this.noteHighlighted ? txTreeNoteOutlined : txTreeNote;
+                const baseW = 0.2, baseH = 0.2, baseX = this.position.x - 0.2, baseY = this.position.y - 1;
+                if (noteTx !== txTreeNote && txTreeNote.naturalWidth > 0) {
+                    const scale = noteTx.naturalWidth / txTreeNote.naturalWidth;
+                    const w = baseW * scale, h = baseH * scale;
+                    ctx.drawImage(noteTx, baseX - (w - baseW) / 2, baseY - (h - baseH) / 2, w, h);
+                } else {
+                    ctx.drawImage(noteTx, baseX, baseY, baseW, baseH);
+                }
+            }
         }
     }
 
     onClick(_worldPos: Vec2): void {
+        if (this.hasNote && this.noteHighlighted) {
+            this.hasNote = false;
+            setOpenNote(openNextNote());
+            return;
+        }
         if (this.chopHighlighted) {
             Player.getInstance().swingItem();
             this.flashTimer = 0.2;
@@ -283,9 +345,26 @@ export class MangoTree extends Entity {
         const slot = getSelectedSlot();
         const holdingAxe = near && slot >= 0 && slot < player.inventory.length && player.inventory[slot].item === ItemId.Axe;
 
+        if (this.hasNote && player.position.distanceSquaredTo(this.position) > 30 * 30) {
+            this.hasNote = false;
+            releaseNote();
+        }
+
         const prevChopHighlighted = this.chopHighlighted;
         const prevHighlighted = this.highlighted;
 
+        if (this.hasNote) {
+            this.noteHighlighted = near;
+            this.chopHighlighted = false;
+            this.highlighted = false;
+            if ((prevChopHighlighted || prevHighlighted) && this.hintHandle) {
+                this.hintHandle.destroy();
+                this.hintHandle = null;
+            }
+            return;
+        }
+
+        this.noteHighlighted = false;
         this.chopHighlighted = holdingAxe;
         this.highlighted = near && this.hasMangoes && !holdingAxe;
 

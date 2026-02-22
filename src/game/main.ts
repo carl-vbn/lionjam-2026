@@ -6,7 +6,7 @@ import {
 import { generateTile, getDryness } from "./generator.js";
 import { Player } from "./player.js";
 import { CrashSite } from "./trees.js";
-import { drawHUD, drawPreGameScreen, handleUIClick, setSelectedSlot, toggleDebugInfo } from "./ui.js";
+import { drawHUD, drawPreGameScreen, handleUIClick, hasOpenNote, setSelectedSlot, toggleDebugInfo } from "./ui.js";
 import { sounds } from "./sounds.js";
 
 // --- Setup ---
@@ -38,12 +38,14 @@ function generateSurroundings(center: Vec2, radiusX: number, radiusY: number): v
 
 // --- Entities ---
 
-const player = new Player(new Vec2(4, 2), world, generateSurroundings);
+const player = new Player(new Vec2(4, 2), world, (_center, radiusX, radiusY) => {
+  generateSurroundings(camera.position.add(player.velocity.normalized().scale(5)), radiusX, radiusY);
+});
 
 world.addEntity(player);
 
-// Generate initial surroundings around player
-generateSurroundings(player.position, 14, 10);
+// Generate initial surroundings
+generateSurroundings(camera.position.add(player.velocity.normalized().scale(5)), 14, 10);
 
 // Place plane crash
 world.addEntity(new CrashSite(new Vec2(0, 0)));
@@ -52,8 +54,8 @@ world.addEntity(new CrashSite(new Vec2(0, 0)));
 
 canvas.addEventListener("wheel", (e) => {
   e.preventDefault();
-  // const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-  // camera.setZoom(Math.max(0.25, Math.min(4, camera.zoom * zoomFactor)));
+  const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+  camera.setZoom(Math.max(0.25, Math.min(4, camera.zoom * zoomFactor)));
 });
 
 input.setUIClickHandler(handleUIClick);
@@ -138,7 +140,10 @@ const loop = createGameLoop((dt) => {
     return;
   }
 
-  world.update(dt);
+  if (!hasOpenNote()) {
+    world.update(dt);
+  }
+
   particles.update(dt);
 
   ctx.beginFrame(dt);
