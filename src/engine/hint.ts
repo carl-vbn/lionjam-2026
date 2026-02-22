@@ -122,10 +122,6 @@ class HintEntity extends Entity {
       });
     }
 
-    // DEBUG: red line at the intended vertical center of each line
-    for (let i = 0; i < lineCount; i++) {
-      ctx.fillRect(this.position.x - rectWidth / 2, textStartY + i * lineHeight - 0.005, rectWidth, 0.01, "rgba(255, 0, 0, 0.6)");
-    }
     ctx.ctx.imageSmoothingEnabled = false;
 
     ctx.popTransform();

@@ -289,7 +289,7 @@ export class Player extends Entity {
   }
 
   private _world: World;
-  private generateSurroundings: (center: Vec2, radius: number) => void;
+  private generateSurroundings: (center: Vec2, radiusX: number, radiusY: number) => void;
   private endGameListener: (() => void) | null = null;
   private keyListenerRegistered = false;
   private moveHintTimer = 2;
@@ -297,7 +297,7 @@ export class Player extends Entity {
   constructor(
     position: Vec2,
     world: World,
-    generateSurroundings: (center: Vec2, radius: number) => void,
+    generateSurroundings: (center: Vec2, radiusX: number, radiusY: number) => void,
   ) {
     super(position);
     Player.instance = this;
@@ -413,7 +413,7 @@ export class Player extends Entity {
         this.hunger = 100;
         this.velocity = Vec2.zero();
         this.knockbackVelocity = Vec2.zero();
-        this.generateSurroundings(this.position, 12);
+        this.generateSurroundings(this.position, 14, 10);
         this.lastWorldGenPos = this.position.clone();
       }
       return;
@@ -515,7 +515,7 @@ export class Player extends Entity {
     });
 
     if (this.position.distanceTo(this.lastWorldGenPos) > 6) {
-      this.generateSurroundings(this.position, 12);
+      this.generateSurroundings(this.position, 12, 8);
       this.lastWorldGenPos = this.position.clone();
     }
   }

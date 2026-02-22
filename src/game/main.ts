@@ -18,11 +18,11 @@ const world = new World();
 const particles = new ParticleSystem();
 const input = InputHandler.init(ctx, world);
 
-function generateSurroundings(center: Vec2, radius: number): void {
-  const startX = Math.floor(center.x - radius);
-  const endX = Math.ceil(center.x + radius);
-  const startY = Math.floor(center.y - radius);
-  const endY = Math.ceil(center.y + radius);
+function generateSurroundings(center: Vec2, radiusX: number, radiusY: number): void {
+  const startX = Math.floor(center.x - radiusX);
+  const endX = Math.ceil(center.x + radiusX);
+  const startY = Math.floor(center.y - radiusY);
+  const endY = Math.ceil(center.y + radiusY);
 
   for (let x = startX; x <= endX; x++) {
     for (let y = startY; y <= endY; y++) {
@@ -43,7 +43,7 @@ const player = new Player(new Vec2(4, 2), world, generateSurroundings);
 world.addEntity(player);
 
 // Generate initial surroundings around player
-generateSurroundings(player.position, 12);
+generateSurroundings(player.position, 14, 10);
 
 // Place plane crash
 world.addEntity(new CrashSite(new Vec2(0, 0)));
@@ -52,8 +52,8 @@ world.addEntity(new CrashSite(new Vec2(0, 0)));
 
 canvas.addEventListener("wheel", (e) => {
   e.preventDefault();
-  const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-  camera.setZoom(Math.max(0.25, Math.min(4, camera.zoom * zoomFactor)));
+  // const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+  // camera.setZoom(Math.max(0.25, Math.min(4, camera.zoom * zoomFactor)));
 });
 
 input.setUIClickHandler(handleUIClick);
