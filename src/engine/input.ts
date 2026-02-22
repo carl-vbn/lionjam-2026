@@ -140,17 +140,21 @@ export class InputHandler {
     canvas.addEventListener("mouseup", onUp);
     canvas.addEventListener("mousemove", onMove);
 
+    const normalizeKey = (key: string) => key.length === 1 ? key.toLowerCase() : key;
+
     const onKeyDown = (e: KeyboardEvent) => {
-      this.keysDown.add(e.key);
+      const key = normalizeKey(e.key);
+      this.keysDown.add(key);
       for (const listener of this.keyListeners) {
-        listener(e.key, true);
+        listener(key, true);
       }
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
-      this.keysDown.delete(e.key);
+      const key = normalizeKey(e.key);
+      this.keysDown.delete(key);
       for (const listener of this.keyListeners) {
-        listener(e.key, false);
+        listener(key, false);
       }
     };
 

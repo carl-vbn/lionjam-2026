@@ -6,7 +6,7 @@ import {
 import { generateTile, getDryness } from "./generator.js";
 import { Player } from "./player.js";
 import { CrashSite } from "./trees.js";
-import { drawHUD, drawPreGameScreen, handleUIClick, setSelectedSlot } from "./ui.js";
+import { drawHUD, drawPreGameScreen, handleUIClick, setSelectedSlot, toggleDebugInfo } from "./ui.js";
 import { sounds } from "./sounds.js";
 
 // --- Setup ---
@@ -65,6 +65,11 @@ input.onKey((key, down) => {
   // Q — attack nearest charging enemy
   if (key === "q") {
     player.attackNearestEnemy();
+    return;
+  }
+
+  if (key === "x") {
+    toggleDebugInfo();
     return;
   }
 

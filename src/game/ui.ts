@@ -104,6 +104,12 @@ function drawShadowedText(ctx: RenderContext, text: string, x: number, y: number
     ctx.drawText(text, x, y, { color: "#ffffff", ...options });
 }
 
+let showDebugInfo = false;
+
+export function toggleDebugInfo(): void {
+    showDebugInfo = !showDebugInfo;
+}
+
 let selectedSlot = -1;
 
 export function getSelectedSlot(): number {
@@ -232,11 +238,13 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
 
     const textOpts = { font: "monospace", size: 16, baseline: "alphabetic" as CanvasTextBaseline, align: "left" as CanvasTextAlign };
 
-    drawShadowedText(ctx, `X: ${player.position.x.toFixed(1)}`, 150, 40, textOpts);
-    drawShadowedText(ctx, `Y: ${player.position.y.toFixed(1)}`, 150, 60, textOpts);
-    drawShadowedText(ctx, `FPS: ${Math.round(fps)}`, 150, 80, textOpts);
-    drawShadowedText(ctx, `Tracking: ${currentTarget.name}`, 150, 100, textOpts);
-    drawShadowedText(ctx, `(X: ${currentTarget.position.x.toFixed(1)}, Y: ${currentTarget.position.y.toFixed(1)})`, 150, 120, textOpts);
+    if (showDebugInfo) {
+        drawShadowedText(ctx, `X: ${player.position.x.toFixed(1)}`, 150, 40, textOpts);
+        drawShadowedText(ctx, `Y: ${player.position.y.toFixed(1)}`, 150, 60, textOpts);
+        drawShadowedText(ctx, `FPS: ${Math.round(fps)}`, 150, 80, textOpts);
+        drawShadowedText(ctx, `Tracking: ${currentTarget.name}`, 150, 100, textOpts);
+        drawShadowedText(ctx, `(X: ${currentTarget.position.x.toFixed(1)}, Y: ${currentTarget.position.y.toFixed(1)})`, 150, 120, textOpts);
+    }
 
     // Compass target selector (below compass)
     const selectorY = 155;
