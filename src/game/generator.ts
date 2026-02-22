@@ -13,6 +13,8 @@ let reservedTiles = new Set<string>();
 // Keep track of large structures (like shipwrecks and jetwrecks) to avoid spawning entities too close to them
 let largeStructures: Vec2[] = [new Vec2(0, 0)]; // Spawn point counts as a large structure
 
+let drynessSeed = Math.random() * 1000;
+
 function subTileOffset(): Vec2 {
     const angle = Math.random() * 2 * Math.PI;
     const radius = Math.random() * 0.4 + 0.1; // 0.1 to 0.5
@@ -20,12 +22,18 @@ function subTileOffset(): Vec2 {
 }
 
 export function getDryness(x: number, y: number): number {
-    let dryness = noise.perlin2((x - 10) * 0.1, y * 0.1) / 2 + 0.5;
+    let dryness = noise.perlin2(drynessSeed + (x - 10) * 0.1, drynessSeed + y * 0.1) / 2 + 0.5;
     if (y > -50) {
         dryness = Math.max(0, dryness * (1 - (y + 50) * 0.01));
     } else {
         dryness += (-50 - y) * 0.01;
     }
+
+    // Ensure area around 0 0 is always sand
+    if (x > -5 && x < 5 && y > -5 && y < 5) {
+        dryness = 0.5;
+    }
+
     return dryness;
 }
 
