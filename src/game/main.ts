@@ -126,7 +126,7 @@ input.onMouse((e) => {
 });
 
 // --- Game loop ---
-let gameStarted = false;
+let gameStarted = true;
 let musicUpdateTimer = 0;
 
 const loop = createGameLoop((dt) => {
@@ -207,7 +207,6 @@ window.addEventListener("click", () => {
     const introVideo = document.getElementById("intro-video") as HTMLVideoElement;
     introVideo.style.display = "block";
     introVideo.play();
-    introVideo.currentTime = introVideo.duration - 2;
 
     // Start game after video ends
     introVideo.onended = () => {

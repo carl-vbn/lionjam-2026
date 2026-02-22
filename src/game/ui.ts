@@ -10,6 +10,7 @@ const txCompassNeedle = getImage("assets/ui/compass/needle.png");
 const txInventorySlot = getImage("assets/ui/slot.png");
 const txButton = getImage("assets/ui/button.png");
 const txButtonLong = getImage("assets/ui/button_long.png");
+const txCraftingUI = getImage("assets/ui/crafting.png");
 
 let txInventorySlotSelected = txInventorySlot;
 createOutlinedImage(txInventorySlot, 2, "cyan").then((outlined) => {
@@ -70,15 +71,14 @@ function drawInventorySlot(ctx: RenderContext, x: number, y: number, slot: Inven
 }
 
 function drawCraftingButton(ctx: RenderContext, x: number, y: number, item: ItemId, hovered: boolean, disabled: boolean) {
-    ctx.drawImage(txButton, x, y, 64, 64);
     const itemSprite = getItemSprite(item);
-    ctx.drawImage(itemSprite, x + 8, y + 8, 48, 48);
+    ctx.drawImage(itemSprite, x + 10, y + 10, 35, 35);
 
     if (disabled)
-        ctx.fillRect(x + 5, y + 4, 55, 56, "rgba(50, 50, 50, 0.5)");
+        ctx.fillRect(x + 8, y + 7, 39, 39, "rgba(50, 50, 50, 0.5)");
 
     else if (hovered)
-        ctx.fillRect(x + 2, y + 2, 55, 56, "rgba(0, 0, 0, 0.1)");
+        ctx.fillRect(x + 5, y + 5, 45, 45, "rgba(0, 0, 0, 0.1)");
 }
 
 function drawCompass(ctx: RenderContext, x: number, y: number, size: number, angle: number) {
@@ -142,10 +142,10 @@ export function handleUIClick(screenPos: Vec2, screenWidth: number, screenHeight
 
     // Check crafting buttons
     for (let i = 0; i < RECIPES.length; i++) {
-        const btnX = 30 + i * 70;
-        const btnY = screenHeight - 94;
-        if (screenPos.x >= btnX && screenPos.x <= btnX + 64 &&
-            screenPos.y >= btnY && screenPos.y <= btnY + 64) {
+        const btnX = 33 + (i % 3) * 58;
+        const btnY = screenHeight - 135 + Math.floor(i / 3) * 56;
+        if (screenPos.x >= btnX && screenPos.x <= btnX + 54 &&
+            screenPos.y >= btnY && screenPos.y <= btnY + 54) {
             const recipe = RECIPES[i];
             const debugMode = InputHandler.getInstance().isKeyDown("m");
             if (debugMode || canCraftRecipe(recipe, player)) {
@@ -305,31 +305,42 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
     }
 
     // Draw crafting buttons
+    ctx.drawImage(txCraftingUI, 20, ctx.height - 200, 200, 200);
+    let hoveredRecipe: Recipe | null = null;
     for (let i = 0; i < RECIPES.length; i++) {
         const recipe = RECIPES[i];
-        const btnX = 30 + i * 70;
-        const btnY = ctx.height - 94;
+        const btnX = 33 + (i % 3) * 58;
+        const btnY = ctx.height - 135 + Math.floor(i / 3) * 56;
         const canCraft = canCraftRecipe(recipe, player);
-        const hovered = mousePos.x >= btnX && mousePos.x <= btnX + 64 && mousePos.y >= btnY && mousePos.y <= btnY + 64;
+        const hovered = mousePos.x >= btnX && mousePos.x <= btnX + 54 && mousePos.y >= btnY && mousePos.y <= btnY + 54;
 
         drawCraftingButton(ctx, btnX, btnY, recipe.result, hovered, !canCraft);
+        if (hovered) hoveredRecipe = recipe;
+    }
 
-        // Tooltip on hover
-        if (hovered) {
-            const ingredients = Object.entries(recipe.ingredients) as [ItemId, number][];
-            for (let j = 0; j < ingredients.length; j++) {
-                const [itemId, needed] = ingredients[j];
-                const have = getItemCount(player, itemId);
-                const color = have >= needed ? "#ffffff" : "#ff4444";
-                const lineY = btnY - 20 - j * 18;
-                drawShadowedText(ctx, `${needed}x ${getItemDisplayName(itemId)}`, btnX, lineY, {
-                    font: "monospace",
-                    size: 13,
-                    color,
-                    align: "left" as CanvasTextAlign,
-                    baseline: "alphabetic" as CanvasTextBaseline,
-                });
-            }
+    // Tooltip — fixed to the right of the crafting UI
+    if (hoveredRecipe) {
+        const tooltipX = 228;
+        const tooltipBaseY = ctx.height - 170;
+        drawShadowedText(ctx, getItemDisplayName(hoveredRecipe.result), tooltipX, tooltipBaseY, {
+            font: "monospace",
+            size: 14,
+            color: "#ffdd66",
+            align: "left" as CanvasTextAlign,
+            baseline: "alphabetic" as CanvasTextBaseline,
+        });
+        const ingredients = Object.entries(hoveredRecipe.ingredients) as [ItemId, number][];
+        for (let j = 0; j < ingredients.length; j++) {
+            const [itemId, needed] = ingredients[j];
+            const have = getItemCount(player, itemId);
+            const color = have >= needed ? "#ffffff" : "#ff4444";
+            drawShadowedText(ctx, `${needed}x ${getItemDisplayName(itemId)}`, tooltipX, tooltipBaseY + 18 + j * 18, {
+                font: "monospace",
+                size: 13,
+                color,
+                align: "left" as CanvasTextAlign,
+                baseline: "alphabetic" as CanvasTextBaseline,
+            });
         }
     }
 }
