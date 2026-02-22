@@ -8,10 +8,10 @@ import { Bonfire, Campfire, Shelter, ShelterShadow } from "./placeables.js";
 import { sounds } from "./sounds.js";
 
 const playerImgs = {
-  base: getImage("/assets/entities/player/base.png"),
-  right: getImage("/assets/entities/player/right.png"),
-  left: getImage("/assets/entities/player/left.png"),
-  eye: getImage("/assets/entities/player/eye.png"),
+  base: getImage("assets/entities/player/base.png"),
+  right: getImage("assets/entities/player/right.png"),
+  left: getImage("assets/entities/player/left.png"),
+  eye: getImage("assets/entities/player/eye.png"),
 };
 
 const SWING_DURATION = 0.25;

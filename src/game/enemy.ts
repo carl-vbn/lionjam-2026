@@ -22,8 +22,8 @@ export const smokeSprite = (() => {
     return canvas;
 })();
 
-const txIdle = getImage("/assets/entities/enemy/idle.png");
-const txAttack = getImage("/assets/entities/enemy/attack.png");
+const txIdle = getImage("assets/entities/enemy/idle.png");
+const txAttack = getImage("assets/entities/enemy/attack.png");
 
 const outlinedAssets: { idle: HTMLImageElement | null; attack: HTMLImageElement | null } = {
     idle: null,

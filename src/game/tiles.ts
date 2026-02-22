@@ -9,15 +9,15 @@ import { Player } from "./player.js";
 import { ItemId } from "./items.js";
 import { sounds } from "./sounds.js";
 
-const txSand = getImage("/assets/tiles/sand.png");
-const txGrass = getImage("/assets/tiles/grass/full.png");
-const txGrassWave = getImage("/assets/tiles/grass/wave.png");
-const txGrassCorner = getImage("/assets/tiles/grass/corner.png");
-const txGrassInnerCorner = getImage("/assets/tiles/grass/icorner.png");
-const fpWater = new Flipbook("/assets/tiles/water/full.png", 3, 0.2);
-const fpWave = new Flipbook("/assets/tiles/water/wave.png", 4, 0.8);
-const fpWaveCorner = new Flipbook("/assets/tiles/water/corner.png", 4, 0.8);
-const fpWaveInnerCorner = new Flipbook("/assets/tiles/water/icorner.png", 4, 0.8);
+const txSand = getImage("assets/tiles/sand.png");
+const txGrass = getImage("assets/tiles/grass/full.png");
+const txGrassWave = getImage("assets/tiles/grass/wave.png");
+const txGrassCorner = getImage("assets/tiles/grass/corner.png");
+const txGrassInnerCorner = getImage("assets/tiles/grass/icorner.png");
+const fpWater = new Flipbook("assets/tiles/water/full.png", 3, 0.2);
+const fpWave = new Flipbook("assets/tiles/water/wave.png", 4, 0.8);
+const fpWaveCorner = new Flipbook("assets/tiles/water/corner.png", 4, 0.8);
+const fpWaveInnerCorner = new Flipbook("assets/tiles/water/icorner.png", 4, 0.8);
 
 export abstract class NaturalTile extends Tile {
     world: World;
@@ -49,7 +49,7 @@ export class GrassTile extends NaturalTile {
     }
 }
 
-const txGround = getImage("/assets/tiles/ground.png");
+const txGround = getImage("assets/tiles/ground.png");
 
 export class GroundTile extends NaturalTile {
     get material(): string {

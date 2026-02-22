@@ -4,7 +4,7 @@ import { RenderContext } from "./render-context.js";
 import { Vec2 } from "./vec2.js";
 import { World } from "./world.js";
 
-const txSpike = getImage("/assets/ui/spike.png");
+const txSpike = getImage("assets/ui/spike.png");
 
 export interface HintHandle {
   destroy(): void;
@@ -106,13 +106,25 @@ class HintEntity extends Entity {
     ctx.ctx.imageSmoothingEnabled = true;
     ctx.drawImage(txSpike, this.position.x - 0.125, spikeY, 0.25, 0.13);
     ctx.fillRect(this.position.x - rectWidth / 2, rectY, rectWidth, rectHeight, "rgba(0, 0, 0, 0.75)");
+    // Cap height for typical sans-serif ≈ 0.7 × em, so the visual center of
+    // cap-height text is 0.35 × fontSize above the alphabetic baseline.
+    const fontSize = 0.15;
+    const centerOffset = fontSize * 0.35;
+
+    const textStartY = rectY + rectHeight / 2 - ((lineCount - 1) * lineHeight) / 2;
     for (let i = 0; i < lineCount; i++) {
-      ctx.drawText(this.lines[i], this.position.x, rectY - 0.08 + i * lineHeight, {
+      const baselineY = textStartY + centerOffset + i * lineHeight;
+      ctx.drawText(this.lines[i], this.position.x, baselineY, {
         align: "center",
-        baseline: "middle",
-        size: 0.15,
+        baseline: "alphabetic",
+        size: fontSize,
         color: "white",
       });
+    }
+
+    // DEBUG: red line at the intended vertical center of each line
+    for (let i = 0; i < lineCount; i++) {
+      ctx.fillRect(this.position.x - rectWidth / 2, textStartY + i * lineHeight - 0.005, rectWidth, 0.01, "rgba(255, 0, 0, 0.6)");
     }
     ctx.ctx.imageSmoothingEnabled = false;
 

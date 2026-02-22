@@ -133,26 +133,26 @@ export const RECIPES: Recipe[] = [
 ];
 
 const ITEM_SPRITES: Record<ItemId, string> = {
-    [ItemId.Stick]: "/assets/items/stick.png",
-    [ItemId.Coconut]: "/assets/items/coconut.png",
-    [ItemId.CookedMeat]: "/assets/items/meat_cooked.png",
-    [ItemId.RawMeat]: "/assets/items/meat_raw.png",
-    [ItemId.Spear]: "/assets/items/spear.png",
-    [ItemId.Rope]: "/assets/items/rope.png",
-    [ItemId.Axe]: "/assets/items/axe.png",
-    [ItemId.MagGlass]: "/assets/items/magglass.png",
-    [ItemId.Pot]: "/assets/items/pot.png",
-    [ItemId.Rock]: "/assets/items/rock.png",
-    [ItemId.Log]: "/assets/items/log.png",
-    [ItemId.Campfire]: "/assets/items/campfire.png",
-    [ItemId.Waterbottle]: "/assets/items/waterbottle.png",
-    [ItemId.DrinkablePot]: "/assets/items/pot_drinkable.png",
-    [ItemId.UndrinkablePot]: "/assets/items/pot_undrinkable.png",
-    [ItemId.Medkit]: "/assets/items/medkit.png",
-    [ItemId.Mango]: "/assets/items/mango.png",
-    [ItemId.Bonfire]: "/assets/entities/bonfire/base.png",
-    [ItemId.Shelter]: "/assets/items/shelter.png",
-    [ItemId.Pickaxe]: "/assets/items/pickaxe.png"
+    [ItemId.Stick]: "assets/items/stick.png",
+    [ItemId.Coconut]: "assets/items/coconut.png",
+    [ItemId.CookedMeat]: "assets/items/meat_cooked.png",
+    [ItemId.RawMeat]: "assets/items/meat_raw.png",
+    [ItemId.Spear]: "assets/items/spear.png",
+    [ItemId.Rope]: "assets/items/rope.png",
+    [ItemId.Axe]: "assets/items/axe.png",
+    [ItemId.MagGlass]: "assets/items/magglass.png",
+    [ItemId.Pot]: "assets/items/pot.png",
+    [ItemId.Rock]: "assets/items/rock.png",
+    [ItemId.Log]: "assets/items/log.png",
+    [ItemId.Campfire]: "assets/items/campfire.png",
+    [ItemId.Waterbottle]: "assets/items/waterbottle.png",
+    [ItemId.DrinkablePot]: "assets/items/pot_drinkable.png",
+    [ItemId.UndrinkablePot]: "assets/items/pot_undrinkable.png",
+    [ItemId.Medkit]: "assets/items/medkit.png",
+    [ItemId.Mango]: "assets/items/mango.png",
+    [ItemId.Bonfire]: "assets/entities/bonfire/base.png",
+    [ItemId.Shelter]: "assets/items/shelter.png",
+    [ItemId.Pickaxe]: "assets/items/pickaxe.png"
 };
 
 interface ItemAssets {

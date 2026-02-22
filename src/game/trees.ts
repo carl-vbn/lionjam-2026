@@ -5,9 +5,9 @@ import { Player } from "./player.js";
 import { getSelectedSlot } from "./ui.js";
 import { sounds } from "./sounds.js";
 
-const fpBush = new Flipbook("/assets/entities/bush.png", 2, 0.75);
-const txTallgrassLong = getImage("/assets/entities/tallgrass/long.png");
-const txTallgrassShort = getImage("/assets/entities/tallgrass/short.png");
+const fpBush = new Flipbook("assets/entities/bush.png", 2, 0.75);
+const txTallgrassLong = getImage("assets/entities/tallgrass/long.png");
+const txTallgrassShort = getImage("assets/entities/tallgrass/short.png");
 
 let shakeHintShown = false;
 let mangoShakeHintShown = false;
@@ -16,16 +16,16 @@ let chopHintShown = false;
 let mangoChopHintShown = false;
 
 const palmTreeAssets = {
-    normal: new Flipbook("/assets/entities/palmtree/palm.png", 2, 0.75),
-    normalHighlighted: new Flipbook("/assets/entities/palmtree/palm.png", 2, 0.75, { width: 2, color: "cyan" }),
-    normalSelected: new Flipbook("/assets/entities/palmtree/palm.png", 2, 0.75, { width: 2, color: "lime" }),
-    coconuts: new Flipbook("/assets/entities/palmtree/palmcoconut.png", 2, 0.75),
-    coconutsHighlighted: new Flipbook("/assets/entities/palmtree/palmcoconut.png", 2, 0.75, { width: 2, color: "cyan" }),
-    coconutsSelected: new Flipbook("/assets/entities/palmtree/palmcoconut.png", 2, 0.75, { width: 2, color: "lime" }),
+    normal: new Flipbook("assets/entities/palmtree/palm.png", 2, 0.75),
+    normalHighlighted: new Flipbook("assets/entities/palmtree/palm.png", 2, 0.75, { width: 2, color: "cyan" }),
+    normalSelected: new Flipbook("assets/entities/palmtree/palm.png", 2, 0.75, { width: 2, color: "lime" }),
+    coconuts: new Flipbook("assets/entities/palmtree/palmcoconut.png", 2, 0.75),
+    coconutsHighlighted: new Flipbook("assets/entities/palmtree/palmcoconut.png", 2, 0.75, { width: 2, color: "cyan" }),
+    coconutsSelected: new Flipbook("assets/entities/palmtree/palmcoconut.png", 2, 0.75, { width: 2, color: "lime" }),
     silhouette: new Image(),
 };
 
-createWhiteSilhouette(getImage("/assets/entities/palmtree/palm.png")).then((silhouette) => {
+createWhiteSilhouette(getImage("assets/entities/palmtree/palm.png")).then((silhouette) => {
     palmTreeAssets.silhouette = silhouette;
 });
 
@@ -163,16 +163,16 @@ export class PalmTree extends Entity {
 }
 
 const mangoTreeAssets = {
-    normal: new Flipbook("/assets/entities/mangotree/mangotree.png", 2, 0.75),
-    normalHighlighted: new Flipbook("/assets/entities/mangotree/mangotree.png", 2, 0.75, { width: 2, color: "cyan" }),
-    normalSelected: new Flipbook("/assets/entities/mangotree/mangotree.png", 2, 0.75, { width: 2, color: "lime" }),
-    mangoes: new Flipbook("/assets/entities/mangotree/mangotree_mango.png", 2, 0.75),
-    mangoesHighlighted: new Flipbook("/assets/entities/mangotree/mangotree_mango.png", 2, 0.75, { width: 2, color: "cyan" }),
-    mangoesSelected: new Flipbook("/assets/entities/mangotree/mangotree_mango.png", 2, 0.75, { width: 2, color: "lime" }),
+    normal: new Flipbook("assets/entities/mangotree/mangotree.png", 2, 0.75),
+    normalHighlighted: new Flipbook("assets/entities/mangotree/mangotree.png", 2, 0.75, { width: 2, color: "cyan" }),
+    normalSelected: new Flipbook("assets/entities/mangotree/mangotree.png", 2, 0.75, { width: 2, color: "lime" }),
+    mangoes: new Flipbook("assets/entities/mangotree/mangotree_mango.png", 2, 0.75),
+    mangoesHighlighted: new Flipbook("assets/entities/mangotree/mangotree_mango.png", 2, 0.75, { width: 2, color: "cyan" }),
+    mangoesSelected: new Flipbook("assets/entities/mangotree/mangotree_mango.png", 2, 0.75, { width: 2, color: "lime" }),
     silhouette: new Image(),
 };
 
-createWhiteSilhouette(getImage("/assets/entities/mangotree/mangotree.png")).then((silhouette) => {
+createWhiteSilhouette(getImage("assets/entities/mangotree/mangotree.png")).then((silhouette) => {
     mangoTreeAssets.silhouette = silhouette;
 });
 
@@ -308,8 +308,8 @@ export class MangoTree extends Entity {
     }
 }
 
-const txShipwreck = getImage("/assets/entities/shipwreck.png");
-const txShipwreckLooted = getImage("/assets/entities/shipwreck_looted.png");
+const txShipwreck = getImage("assets/entities/shipwreck.png");
+const txShipwreckLooted = getImage("assets/entities/shipwreck_looted.png");
 const shipwreckAssets: {
     highlighted: HTMLImageElement | null;
     selected: HTMLImageElement | null;
@@ -413,8 +413,8 @@ export class Shipwreck extends Entity {
     }
 }
 
-const txJet = getImage("/assets/entities/jet.png");
-const txSuitcase = getImage("/assets/entities/suitcase.png");
+const txJet = getImage("assets/entities/jet.png");
+const txSuitcase = getImage("assets/entities/suitcase.png");
 
 let txSuitcaseHighlighted: HTMLImageElement = txSuitcase;
 let txSuitcaseSelected: HTMLImageElement = txSuitcase;
@@ -520,7 +520,7 @@ export class Tallgrass extends Entity {
     }
 }
 
-const txBoulder = getImage("/assets/entities/boulder.png");
+const txBoulder = getImage("assets/entities/boulder.png");
 const boulderAssets: { highlighted: HTMLImageElement | null; selected: HTMLImageElement | null } = { highlighted: null, selected: null };
 createOutlinedImage(txBoulder, 2, "cyan").then((img) => { boulderAssets.highlighted = img; });
 createOutlinedImage(txBoulder, 2, "lime").then((img) => { boulderAssets.selected = img; });
@@ -607,8 +607,8 @@ export class Boulder extends Entity {
     }
 }
 
-const txPlaneCrash = getImage("/assets/entities/plane.png");
-const fpPlaneSmoke = new Flipbook("/assets/entities/smoke.png", 2, 0.5);
+const txPlaneCrash = getImage("assets/entities/plane.png");
+const fpPlaneSmoke = new Flipbook("assets/entities/smoke.png", 2, 0.5);
 
 export class CrashSite extends Entity {
     constructor(position: Vec2) {
