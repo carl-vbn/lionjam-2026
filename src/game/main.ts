@@ -122,6 +122,7 @@ input.onMouse((e) => {
 
 // --- Game loop ---
 let gameStarted = false;
+let musicUpdateTimer = 0;
 
 const loop = createGameLoop((dt) => {
   if (!gameStarted) {
@@ -138,14 +139,16 @@ const loop = createGameLoop((dt) => {
   ctx.endFrame();
   drawHUD(ctx, dt, camera);
 
-  // Update ambient music volumes based on player's tile dryness
-  if (atTheShoreAudio && seaAmbianceAudio) {
+  // Update ambient music volumes ~10x per second
+  musicUpdateTimer += dt;
+  if (atTheShoreAudio && seaAmbianceAudio && musicUpdateTimer >= 0.1) {
     const dryness = getDryness(Math.floor(player.position.x), Math.floor(player.position.y));
     const targetShoreVol = Math.max(0, Math.min(1, (dryness - 0.2) / 0.6));
     const targetSeaVol   = Math.max(0, Math.min(1, 1 - dryness / 0.8));
     const lerpSpeed = 1.5;
-    atTheShoreAudio.volume  += (targetShoreVol - atTheShoreAudio.volume)  * Math.min(1, lerpSpeed * dt);
-    seaAmbianceAudio.volume += (targetSeaVol   - seaAmbianceAudio.volume) * Math.min(1, lerpSpeed * dt);
+    atTheShoreAudio.volume  += (targetShoreVol - atTheShoreAudio.volume)  * Math.min(1, lerpSpeed * musicUpdateTimer);
+    seaAmbianceAudio.volume += (targetSeaVol   - seaAmbianceAudio.volume) * Math.min(1, lerpSpeed * musicUpdateTimer);
+    musicUpdateTimer = 0;
   }
 
   // Move camera to follow player
@@ -199,7 +202,7 @@ window.addEventListener("click", () => {
     const introVideo = document.getElementById("intro-video") as HTMLVideoElement;
     introVideo.style.display = "block";
     introVideo.play();
-    // introVideo.currentTime = introVideo.duration - 2;
+    introVideo.currentTime = introVideo.duration - 2;
 
     // Start game after video ends
     introVideo.onended = () => {
