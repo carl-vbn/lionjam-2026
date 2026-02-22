@@ -407,7 +407,7 @@ export class Player extends Entity {
       this.respawnTimer -= _dt;
       if (this.respawnTimer <= 0) {
         this.dead = false;
-        this.position = Vec2.zero();
+        this.position = new Vec2(4, 2);
         this.health = 50;
         this.water = 100;
         this.hunger = 100;

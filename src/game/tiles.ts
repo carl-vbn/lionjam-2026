@@ -131,8 +131,20 @@ export class WaterTile extends NaturalTile {
     }
 }
 
+const shellSprites = Array.from({ length: 5 }, (_, i) => getImage(`assets/tiles/shells/shell${i}.png`));
+
 export class SandTile extends NaturalTile {
     _wet?: boolean = undefined;
+    _shell: {type: number, offset: Vec2, rotation: number} | null = null;
+
+    constructor(world: World, x: number, y: number, dryness: number) {
+        super(world, x, y);
+        this._shell = Math.random() > 0.1 + 3 * dryness ? {
+            type: Math.floor(Math.random() * 5),
+            offset: new Vec2(Math.random() * 0.7, Math.random() * 0.7),
+            rotation: Math.random() * 2 * Math.PI
+        } : null;
+    }
 
     get material(): string {
         return "sand";
@@ -216,6 +228,13 @@ export class SandTile extends NaturalTile {
         if (this.neighborMaterial(1, -1) === "grass" && !grassTop && !grassRight)       this.drawRotatedImage(ctx, txGrassCorner, Math.PI / 2);
         if (this.neighborMaterial(1, 1) === "grass" && !grassBottom && !grassRight)     this.drawRotatedImage(ctx, txGrassCorner, Math.PI);
         if (this.neighborMaterial(-1, 1) === "grass" && !grassBottom && !grassLeft)     this.drawRotatedImage(ctx, txGrassCorner, -Math.PI / 2);
+
+        // Sea shells
+        if (this._shell !== null) {
+            ctx.pushTransform({ rotation: this._shell.rotation, center: this._shell.offset.add(new Vec2(0.15, 0.15)) });
+            ctx.drawImage(shellSprites[this._shell.type], this._shell.offset.x, this._shell.offset.y, 0.3, 0.3);
+            ctx.popTransform();
+        }
 
         // --- Water overlays (wave on bottom, corner bottom-right, icorner all except upper-right) ---
         const waterBottom = bottomMat === "water";

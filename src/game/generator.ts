@@ -141,7 +141,7 @@ export function generateTile(world: World, x: number, y: number): NaturalTile | 
     if (dryness < 0.2) {
         return new WaterTile(world, x, y);
     } else if (dryness < 0.8) {
-        return new SandTile(world, x, y);
+        return new SandTile(world, x, y, dryness);
     } else if (dryness < 1.2) {
         return new GrassTile(world, x, y);
     } else {
