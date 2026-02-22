@@ -241,8 +241,7 @@ export class Bonfire extends Entity {
             this.stage++;
             this.clearHint();
         } else if (this.stage === 7 && !this.lit && player.isHolding(ItemId.MagGlass)) {
-            this.lit = true;
-            this.clearHint();
+            player.endGame();
         }
     }
 
@@ -271,7 +270,7 @@ export class Bonfire extends Entity {
 
 // --- Shelter ---
 
-const SHELTER_REGEN_RATE = 5; // health per second
+const SHELTER_REGEN_RATE = 10; // health per second
 
 const SHELTER_PREFIXES = [
     "Camp", "Fort", "Haven", "Refuge", "Outpost", "Lodge", "Nest", "Den", "Hut",

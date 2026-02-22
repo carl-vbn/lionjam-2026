@@ -274,6 +274,7 @@ export class Player extends Entity {
 
   private _world: World;
   private generateSurroundings: (center: Vec2, radius: number) => void;
+  private endGameListener: (() => void) | null = null;
   private keyListenerRegistered = false;
   private moveHintTimer = 2;
 
@@ -500,6 +501,16 @@ export class Player extends Entity {
     if (this.position.distanceTo(this.lastWorldGenPos) > 6) {
       this.generateSurroundings(this.position, 12);
       this.lastWorldGenPos = this.position.clone();
+    }
+  }
+
+  setEndGameListener(listener: () => void): void {
+    this.endGameListener = listener;
+  }
+
+  endGame(): void {
+    if (this.endGameListener) {
+      this.endGameListener();
     }
   }
 

@@ -5,13 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Echoes of Bermuda</title>
   <style>
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
     canvas { display: block; width: 100%; height: 100%; }
+    video { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+    video[controls] { display: none; }
   </style>
 </head>
 <body>
   <canvas id="game-canvas"></canvas>
+  <video
+      id="intro-video"
+      src="/assets/video/intro.mp4"
+      playsinline
+      preload="auto"
+      controlslist="nodownload noplaybackrate noremoteplayback"
+      disablepictureinpicture
+      style="animation: fadeIn 3s;"
+    ></video>
+    <video
+      id="ending-video"
+      src="/assets/video/ending.mp4"
+      playsinline
+      preload="auto"
+      controlslist="nodownload noplaybackrate noremoteplayback"
+      disablepictureinpicture
+    ></video>
   <script type="module" src="dist/game/main.js"></script>
 </body>
 </html>

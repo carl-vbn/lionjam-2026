@@ -205,8 +205,16 @@ export function handleUIClick(screenPos: Vec2, screenWidth: number, screenHeight
     return false;
 }
 
+const fpsHistory: number[] = [];
+let fpsHistoryTime = 0;
+
 export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
-    const fps = 1 / dt;
+    fpsHistory.push(dt);
+    fpsHistoryTime += dt;
+    while (fpsHistoryTime - fpsHistory[0] > 10) {
+        fpsHistoryTime -= fpsHistory.shift()!;
+    }
+    const fps = fpsHistory.length / fpsHistoryTime;
     const player = Player.getInstance()!;
 
     const { screenPos: mousePos } = InputHandler.getInstance()!.getMousePos();
@@ -316,4 +324,18 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
             }
         }
     }
+}
+
+let pregameTime = 0;
+export function drawPreGameScreen(ctx: RenderContext, dt: number) {
+    ctx.fillRect(0, 0, ctx.width, ctx.height, "#000000");
+    ctx.drawText("Click anywhere to start", ctx.width / 2, ctx.height / 2, {
+        font: "monospace",
+        size: 32,
+        color: `rgba(255, 255, 255, ${Math.sin(pregameTime * 4) * 0.5 + 0.5})`,
+        align: "center" as CanvasTextAlign,
+        baseline: "middle" as CanvasTextBaseline,
+    });
+
+    pregameTime += dt;
 }

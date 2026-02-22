@@ -6,7 +6,7 @@ import {
 import { generateTile, getDryness } from "./generator.js";
 import { Player } from "./player.js";
 import { CrashSite } from "./trees.js";
-import { drawHUD, handleUIClick, setSelectedSlot } from "./ui.js";
+import { drawHUD, drawPreGameScreen, handleUIClick, setSelectedSlot } from "./ui.js";
 import { sounds } from "./sounds.js";
 
 // --- Setup ---
@@ -121,8 +121,14 @@ input.onMouse((e) => {
 });
 
 // --- Game loop ---
+let gameStarted = false;
 
 const loop = createGameLoop((dt) => {
+  if (!gameStarted) {
+    drawPreGameScreen(ctx, dt);
+    return;
+  }
+
   world.update(dt);
   particles.update(dt);
 
@@ -160,7 +166,50 @@ function initMusic(): void {
   seaAmbianceAudio = sounds.seaAmbiance.playLooping(0);
 }
 
-window.addEventListener("click", initMusic, { once: true });
-window.addEventListener("keydown", initMusic, { once: true });
+player.setEndGameListener(() => {
+  if (atTheShoreAudio) {
+    atTheShoreAudio.pause();
+    atTheShoreAudio.currentTime = 0;
+  }
+  if (seaAmbianceAudio) {
+    seaAmbianceAudio.pause();
+    seaAmbianceAudio.currentTime = 0;
+  }
+
+  // Show ending video
+  const endingVideo = document.getElementById("ending-video") as HTMLVideoElement;
+  endingVideo.style.display = "block";
+  endingVideo.play();
+
+  // Hide canvas
+  canvas.style.display = "none";
+
+  // Restart game after video ends
+  endingVideo.onended = () => {
+    window.location.reload();
+  };
+});
+
+window.addEventListener("click", () => {
+  if (!gameStarted) {
+    // Hide canvas
+    canvas.style.display = "none";
+
+    // Show intro video
+    const introVideo = document.getElementById("intro-video") as HTMLVideoElement;
+    introVideo.style.display = "block";
+    introVideo.play();
+    // introVideo.currentTime = introVideo.duration - 2;
+
+    // Start game after video ends
+    introVideo.onended = () => {
+      introVideo.remove();
+      
+      canvas.style.display = "block";
+      gameStarted = true;
+      initMusic();
+    };
+  }
+});
 
 loop.start();

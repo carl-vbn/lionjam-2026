@@ -23,7 +23,8 @@ export enum ItemId {
     Medkit = "medkit",
     Mango = "mango",
     Bonfire = "bonfire",
-    Shelter = "shelter"
+    Shelter = "shelter",
+    Pickaxe = "pickaxe"
 }
 
 export interface WeaponData {
@@ -37,7 +38,8 @@ const WEAPON_DATA: Partial<Record<ItemId, WeaponData>> = {
     [ItemId.Coconut]: { damage: 5, range:8, throwable: true },
     [ItemId.Spear]: { damage: 100, range: 8, throwable: true },
     [ItemId.Axe]: { damage: 20, range: 3, throwable: false },
-    [ItemId.Rock]: { damage: 8, range: 10, throwable: true }
+    [ItemId.Rock]: { damage: 8, range: 10, throwable: true },
+    [ItemId.Pickaxe]: { damage: 15, range: 3, throwable: false },
 };
 
 export function getWeaponData(itemId: ItemId): WeaponData | null {
@@ -63,7 +65,8 @@ const ITEM_DISPLAY_NAMES: Record<ItemId, string> = {
     [ItemId.Medkit]: "Medkit",
     [ItemId.Mango]: "Mango",
     [ItemId.Bonfire]: "Bonfire",
-    [ItemId.Shelter]: "Shelter"
+    [ItemId.Shelter]: "Shelter",
+    [ItemId.Pickaxe]: "Pickaxe"
 };
 
 export function getItemDisplayName(itemId: ItemId): string {
@@ -96,6 +99,7 @@ export interface Recipe {
 export const RECIPES: Recipe[] = [
     { result: ItemId.Spear, ingredients: { [ItemId.Stick]: 3, [ItemId.Rope]: 1 } },
     { result: ItemId.Axe, ingredients: { [ItemId.Stick]: 2, [ItemId.Rope]: 2, [ItemId.Rock]: 1 } },
+    { result: ItemId.Pickaxe, ingredients: { [ItemId.Stick]: 2, [ItemId.Rope]: 1, [ItemId.Rock]: 3 } },
     { result: ItemId.Campfire, ingredients: { [ItemId.Stick]: 4, [ItemId.Log]: 3 } },
     { result: ItemId.Bonfire, ingredients: { [ItemId.Rock]: 50 } },
     { result: ItemId.Shelter, ingredients: { [ItemId.Stick]: 6, [ItemId.Log]: 8, [ItemId.Rope]: 5 } },
@@ -120,7 +124,8 @@ const ITEM_SPRITES: Record<ItemId, string> = {
     [ItemId.Medkit]: "/assets/items/medkit.png",
     [ItemId.Mango]: "/assets/items/mango.png",
     [ItemId.Bonfire]: "/assets/entities/bonfire/base.png",
-    [ItemId.Shelter]: "/assets/items/shelter.png"
+    [ItemId.Shelter]: "/assets/items/shelter.png",
+    [ItemId.Pickaxe]: "/assets/items/pickaxe.png"
 };
 
 interface ItemAssets {

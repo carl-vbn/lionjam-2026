@@ -92,14 +92,17 @@ export class PalmTree extends Entity {
             Player.getInstance().swingItem();
             this.flashTimer = 0.2;
             sounds.chop.play();
-
+            
+            const drops: Partial<Record<ItemId, number>> = {};
             if (this.hasCoconuts) {
                 const coconutCount = 1 + Math.floor(Math.random() * 3);
-                dropItems(this.world, this.position, { [ItemId.Coconut]: coconutCount });
+                drops[ItemId.Coconut] = coconutCount;
             }
 
             const logCount = 1 + Math.floor(Math.random() * 3); // 1-3 logs
-            dropItems(this.world, this.position, { [ItemId.Log]: logCount });
+            drops[ItemId.Log] = logCount;
+            if (Math.random() < 0.3) drops[ItemId.Stick] = 1;
+            dropItems(this.world, this.position, drops);
 
             if (this.hintHandle) {
                 this.hintHandle.destroy();
@@ -235,13 +238,19 @@ export class MangoTree extends Entity {
             this.flashTimer = 0.2;
             sounds.chop.play();
 
+            const drops: Partial<Record<ItemId, number>> = {};
+
             if (this.hasMangoes) {
                 const mangoCount = 1 + Math.floor(Math.random() * 3);
-                dropItems(this.world, this.position, { [ItemId.Mango]: mangoCount });
+                drops[ItemId.Mango] = mangoCount;
             }
 
             const logCount = 1 + Math.floor(Math.random() * 3);
-            dropItems(this.world, this.position, { [ItemId.Log]: logCount });
+            drops[ItemId.Log] = logCount;
+
+            if (Math.random() < 0.3) drops[ItemId.Stick] = 1 + Math.floor(Math.random() * 3);
+
+            dropItems(this.world, this.position, drops);
 
             if (this.hintHandle) {
                 this.hintHandle.destroy();
@@ -504,6 +513,93 @@ export class Tallgrass extends Entity {
 
     draw(ctx: RenderContext): void {
         ctx.drawImage(this.isTall ? txTallgrassLong : txTallgrassShort, this.position.x - 0.5, this.position.y - 0.5, 1, 1);
+    }
+}
+
+const txBoulder = getImage("/assets/entities/boulder.png");
+const boulderAssets: { highlighted: HTMLImageElement | null; selected: HTMLImageElement | null } = { highlighted: null, selected: null };
+createOutlinedImage(txBoulder, 2, "cyan").then((img) => { boulderAssets.highlighted = img; });
+createOutlinedImage(txBoulder, 2, "lime").then((img) => { boulderAssets.selected = img; });
+
+let mineHintShown = false;
+
+export class Boulder extends Entity {
+    private world: World;
+    private highlighted = false;
+    private destroyed = false;
+    private hintHandle: HintHandle | null = null;
+
+    constructor(position: Vec2, world: World) {
+        super(position);
+        this.world = world;
+        this.layer = 1;
+        this.size = new Vec2(1, 1);
+    }
+
+    get clickable(): boolean {
+        return this.highlighted;
+    }
+
+    draw(ctx: RenderContext): void {
+        if (this.destroyed) return;
+
+        ctx.fillEllipse(this.position.x, this.position.y - 0.3, 0.5, 0.2, "rgba(0, 0, 0, 0.3)");
+
+        const { worldPos: mousePos } = InputHandler.getInstance().getMousePos();
+        const hovered = Math.abs(mousePos.x - this.position.x) < 0.5 && mousePos.y <= this.position.y && mousePos.y > this.position.y - 1;
+
+        let sprite: HTMLImageElement = txBoulder;
+        if (this.highlighted && hovered && boulderAssets.selected) {
+            sprite = boulderAssets.selected;
+        } else if (this.highlighted && boulderAssets.highlighted) {
+            sprite = boulderAssets.highlighted;
+        }
+
+        let drawW = 1;
+        let drawH = 1;
+        if (sprite !== txBoulder && txBoulder.naturalWidth > 0) {
+            drawW = sprite.naturalWidth / txBoulder.naturalWidth;
+            drawH = sprite.naturalHeight / txBoulder.naturalHeight;
+        }
+        ctx.drawImage(sprite, this.position.x - drawW / 2, this.position.y - drawH, drawW, drawH);
+    }
+
+    onClick(_worldPos: Vec2): void {
+        if (this.highlighted) {
+            Player.getInstance().swingItem();
+            sounds.chop.play();
+            dropItems(this.world, this.position, { [ItemId.Rock]: 5 });
+            if (this.hintHandle) {
+                this.hintHandle.destroy();
+                this.hintHandle = null;
+            }
+            this.destroyed = true;
+        }
+    }
+
+    update(_dt: number): void {
+        if (this.destroyed) {
+            this.world.removeEntity(this);
+            return;
+        }
+
+        const player = Player.getInstance();
+        const near = player.position.distanceSquaredTo(this.position) < 9;
+        const slot = getSelectedSlot();
+        const holdingPickaxe = near && slot >= 0 && slot < player.inventory.length && player.inventory[slot].item === ItemId.Pickaxe;
+
+        const prevHighlighted = this.highlighted;
+        this.highlighted = holdingPickaxe;
+
+        if (this.highlighted && !prevHighlighted) {
+            if (!mineHintShown) {
+                this.hintHandle = attachHint(this, "Mine", this.world, new Vec2(0, 1));
+                mineHintShown = true;
+            }
+        } else if (!this.highlighted && prevHighlighted && this.hintHandle) {
+            this.hintHandle.destroy();
+            this.hintHandle = null;
+        }
     }
 }
 
