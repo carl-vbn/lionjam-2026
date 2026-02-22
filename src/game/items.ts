@@ -91,6 +91,33 @@ export function getItemAction(itemId: ItemId): string | null {
     return ITEM_ACTIONS[itemId] ?? null;
 }
 
+const ITEM_DESCRIPTIONS: Partial<Record<ItemId, string>> = {
+    [ItemId.Stick]:          "Primitive weapon",
+    [ItemId.Rock]:           "Can be thrown at enemies",
+    [ItemId.Rope]:           "Used for crafting",
+    [ItemId.Log]:            "Used for crafting",
+    [ItemId.Axe]:            "Powerful tool and weapon",
+    [ItemId.Pickaxe]:        "Mine boulders",
+    [ItemId.Spear]:          "Kills enemies in one hit",
+    [ItemId.MagGlass]:       "Improvised lighter",
+    [ItemId.Pot]:            "Collect and hold water",
+    [ItemId.Coconut]:        "Restores a little food and water",
+    [ItemId.Mango]:          "Restores a little food and water",
+    [ItemId.RawMeat]:        "Eat raw or cook at a campfire",
+    [ItemId.CookedMeat]:     "Great food source",
+    [ItemId.Waterbottle]:    "Restores water",
+    [ItemId.DrinkablePot]:   "Restores water",
+    [ItemId.UndrinkablePot]: "Restores water, but at a cost",
+    [ItemId.Medkit]:         "Fully restores health",
+    [ItemId.Campfire]:       "Cook food and boil water",
+    [ItemId.Bonfire]:        "Signal for rescue",
+    [ItemId.Shelter]:        "Restores health, can be tracked",
+};
+
+export function getItemDescription(itemId: ItemId): string | null {
+    return ITEM_DESCRIPTIONS[itemId] ?? null;
+}
+
 export interface Recipe {
     result: ItemId;
     ingredients: Partial<Record<ItemId, number>>;

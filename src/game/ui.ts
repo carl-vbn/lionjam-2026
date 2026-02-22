@@ -1,5 +1,5 @@
 import { Camera, createOutlinedImage, getImage, InputHandler, RenderContext, Vec2, World } from "../engine/index.js";
-import { getItemAction, getItemDisplayName, getItemSprite, ItemId, Recipe, RECIPES } from "./items.js";
+import { getItemAction, getItemDescription, getItemDisplayName, getItemSprite, ItemId, Recipe, RECIPES } from "./items.js";
 import { InventorySlot, Player } from "./player.js";
 import { sounds } from "./sounds.js";
 
@@ -290,12 +290,22 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
     if (selectedSlot >= 0 && selectedSlot < player.inventory.length) {
         const item = player.inventory[selectedSlot].item;
         const name = getItemDisplayName(item);
-        drawShadowedText(ctx, name, ctx.width - 48, ctx.height - 110, {
+        drawShadowedText(ctx, name, ctx.width - 48, ctx.height - 130, {
             font: "monospace",
             size: 18,
             align: "right" as CanvasTextAlign,
             baseline: "alphabetic" as CanvasTextBaseline,
         });
+        const description = getItemDescription(item);
+        if (description) {
+            drawShadowedText(ctx, description, ctx.width - 48, ctx.height - 110, {
+                font: "monospace",
+                size: 14,
+                color: "#aaaaaa",
+                align: "right" as CanvasTextAlign,
+                baseline: "alphabetic" as CanvasTextBaseline,
+            });
+        }
         const action = getItemAction(item);
         if (action) {
             drawShadowedText(ctx, `Press [E] to ${action}`, ctx.width / 2, ctx.height - 128, {
@@ -328,19 +338,30 @@ export function drawHUD(ctx: RenderContext, dt: number, camera: Camera) {
         const tooltipBaseY = ctx.height - 170;
         drawShadowedText(ctx, getItemDisplayName(hoveredRecipe.result), tooltipX, tooltipBaseY, {
             font: "monospace",
-            size: 14,
+            size: 16,
             color: "#ffdd66",
             align: "left" as CanvasTextAlign,
             baseline: "alphabetic" as CanvasTextBaseline,
         });
+        const craftDescription = getItemDescription(hoveredRecipe.result);
+        if (craftDescription) {
+            drawShadowedText(ctx, craftDescription, tooltipX, tooltipBaseY + 18, {
+                font: "monospace",
+                size: 14,
+                color: "#aaaaaa",
+                align: "left" as CanvasTextAlign,
+                baseline: "alphabetic" as CanvasTextBaseline,
+            });
+        }
+        const ingredientOffsetY = craftDescription ? 40 : 18;
         const ingredients = Object.entries(hoveredRecipe.ingredients) as [ItemId, number][];
         for (let j = 0; j < ingredients.length; j++) {
             const [itemId, needed] = ingredients[j];
             const have = getItemCount(player, itemId);
             const color = have >= needed ? "#ffffff" : "#ff4444";
-            drawShadowedText(ctx, `${needed}x ${getItemDisplayName(itemId)}`, tooltipX, tooltipBaseY + 18 + j * 18, {
+            drawShadowedText(ctx, `${needed}x ${getItemDisplayName(itemId)}`, tooltipX, tooltipBaseY + ingredientOffsetY + j * 18, {
                 font: "monospace",
-                size: 13,
+                size: 14,
                 color,
                 align: "left" as CanvasTextAlign,
                 baseline: "alphabetic" as CanvasTextBaseline,

@@ -53,7 +53,7 @@ export class Player extends Entity {
   lastWorldGenPos: Vec2;
   footsteps: { position: Vec2; lifetime: number; scale: number; color: string }[];
   footstepTimer: number;
-  inventory: InventorySlot[] = [{item: ItemId.Stick, quantity: 200}, {item: ItemId.Log, quantity: 200}];
+  inventory: InventorySlot[] = [];
   health = 100;
   water = 100;
   hunger = 100;
