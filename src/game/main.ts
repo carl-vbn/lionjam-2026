@@ -129,7 +129,7 @@ input.onMouse((e) => {
 });
 
 // --- Game loop ---
-let gameStarted = true;
+let gameStarted = false;
 let gameEnded = false;
 let musicUpdateTimer = 0;
 

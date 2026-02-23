@@ -12,10 +12,7 @@ export const sounds = {
   ignite:      new AudioClip("assets/audio/ignite.mp3"),
   kill:        new AudioClip("assets/audio/kill.wav"),
   pickups: [
-    new AudioClip("assets/audio/pickup.wav"),
-    new AudioClip("assets/audio/pickup2.wav"),
     new AudioClip("assets/audio/pickup3.wav"),
-    new AudioClip("assets/audio/pickup4.wav"),
     new AudioClip("assets/audio/pickup5.wav"),
   ],
   place:       new AudioClip("assets/audio/place.wav"),
