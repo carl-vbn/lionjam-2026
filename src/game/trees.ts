@@ -464,6 +464,10 @@ export class Shipwreck extends Entity {
                 items[ItemId.MagGlass] = 1;
             }
 
+            if (Math.random() < 0.05) {
+                items[ItemId.PirateHat] = 1;
+            }
+
             dropItems(this.world, this.position.add(new Vec2(0, -2)), items);
 
             if (this.hintHandle) {
@@ -632,6 +636,10 @@ export class Suitcase extends Entity {
             for (let i = 0; i<dropCount; i++) {
                 const chosenItem = possibleItems[Math.floor(Math.random() * possibleItems.length)];
                 items[chosenItem] = (items[chosenItem] || 0) + 1;
+            }
+
+            if (Math.random() < 0.015) {
+                items[ItemId.CapitainHat] = 1;
             }
 
             dropItems(world, this.position, items);

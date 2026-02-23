@@ -24,7 +24,9 @@ export enum ItemId {
     Mango = "mango",
     Bonfire = "bonfire",
     Shelter = "shelter",
-    Pickaxe = "pickaxe"
+    Pickaxe = "pickaxe",
+    PirateHat = "piratehat",
+    CapitainHat = "capitainhat"
 }
 
 export interface WeaponData {
@@ -66,7 +68,9 @@ const ITEM_DISPLAY_NAMES: Record<ItemId, string> = {
     [ItemId.Mango]: "Mango",
     [ItemId.Bonfire]: "Bonfire",
     [ItemId.Shelter]: "Shelter",
-    [ItemId.Pickaxe]: "Pickaxe"
+    [ItemId.Pickaxe]: "Pickaxe",
+    [ItemId.PirateHat]: "Pirate Hat",
+    [ItemId.CapitainHat]: "Captain Hat"
 };
 
 export function getItemDisplayName(itemId: ItemId): string {
@@ -84,7 +88,9 @@ const ITEM_ACTIONS: Partial<Record<ItemId, string>> = {
     [ItemId.DrinkablePot]: "drink",
     [ItemId.UndrinkablePot]: "drink",
     [ItemId.Medkit]: "use",
-    [ItemId.Shelter]: "place"
+    [ItemId.Shelter]: "place",
+    [ItemId.PirateHat]: "wear",
+    [ItemId.CapitainHat]: "wear",
 };
 
 export function getItemAction(itemId: ItemId): string | null {
@@ -152,7 +158,9 @@ const ITEM_SPRITES: Record<ItemId, string> = {
     [ItemId.Mango]: "assets/items/mango.png",
     [ItemId.Bonfire]: "assets/entities/bonfire/base.png",
     [ItemId.Shelter]: "assets/items/shelter.png",
-    [ItemId.Pickaxe]: "assets/items/pickaxe.png"
+    [ItemId.Pickaxe]: "assets/items/pickaxe.png",
+    [ItemId.PirateHat]: "assets/items/piratehat.png",
+    [ItemId.CapitainHat]: "assets/items/capitainhat.png"
 };
 
 interface ItemAssets {

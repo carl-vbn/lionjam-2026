@@ -54,8 +54,8 @@ world.addEntity(new CrashSite(new Vec2(0, 0)));
 
 canvas.addEventListener("wheel", (e) => {
   e.preventDefault();
-  const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-  camera.setZoom(Math.max(0.25, Math.min(4, camera.zoom * zoomFactor)));
+  // const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+  // camera.setZoom(Math.max(0.25, Math.min(4, camera.zoom * zoomFactor)));
 });
 
 input.setUIClickHandler(handleUIClick);
@@ -63,6 +63,7 @@ input.setUIClickHandler(handleUIClick);
 // Keyboard shortcuts
 input.onKey((key, down) => {
   if (!down) return;
+  if (hasOpenNote()) return;
 
   // Q — attack nearest charging enemy
   if (key === "q") {

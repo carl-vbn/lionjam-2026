@@ -2,7 +2,7 @@ import { Vec2, Entity, ParticleSystem, RenderContext, InputHandler, World, attac
 import { createWhiteSilhouette, getImage } from "../engine/image.js";
 import { NaturalTile } from "./tiles.js";
 import { dropItems, getItemAction, getItemSprite, ItemId } from "./items.js";
-import { getSelectedSlot, setDeathLocation, setSelectedSlot } from "./ui.js";
+import { getSelectedSlot, hasOpenNote, setDeathLocation, setSelectedSlot } from "./ui.js";
 import { smokeSprite, Enemy } from "./enemy.js";
 import { Bonfire, Campfire, getShelters, Shelter, ShelterShadow } from "./placeables.js";
 import { sounds } from "./sounds.js";
@@ -63,6 +63,7 @@ export class Player extends Entity {
   private swingTimer = 0;
   private dead = false;
   private respawnTimer = 0;
+  private skinApplied = false;
 
   swingItem(): void {
     this.swingTimer = SWING_DURATION;
@@ -71,6 +72,22 @@ export class Player extends Entity {
 
   applyKnockback(direction: Vec2): void {
     this.knockbackVelocity = this.knockbackVelocity.add(direction);
+  }
+
+  setSkin(suffix: string): void {
+    const base  = getImage(`assets/entities/player/base_${suffix}.png`);
+    const right = getImage(`assets/entities/player/right_${suffix}.png`);
+    const left  = getImage(`assets/entities/player/left_${suffix}.png`);
+    playerImgs.base  = base;
+    playerImgs.right = right;
+    playerImgs.left  = left;
+    this.skinApplied = true;
+    whiteSilhouettes.base  = null;
+    whiteSilhouettes.right = null;
+    whiteSilhouettes.left  = null;
+    createWhiteSilhouette(base).then((img)  => { whiteSilhouettes.base  = img; });
+    createWhiteSilhouette(right).then((img) => { whiteSilhouettes.right = img; });
+    createWhiteSilhouette(left).then((img)  => { whiteSilhouettes.left  = img; });
   }
 
   takeDamage(amount: number): void {
@@ -280,6 +297,14 @@ export class Player extends Entity {
         }
         break;
       }
+      case ItemId.CapitainHat: {
+        this.setSkin("capitain");
+        break;
+      }
+      case ItemId.PirateHat: {
+        this.setSkin("pirate");
+        break;
+      }
     }
     if (replaceWith !== null) {
       this.replaceHeldItem(replaceWith);
@@ -340,7 +365,8 @@ export class Player extends Entity {
       ? (movingRight ? whiteSilhouettes.right : movingLeft ? whiteSilhouettes.left : whiteSilhouettes.base)
       : null;
 
-    ctx.drawImage(whiteImg ?? img, this.position.x - 0.75 / 2, this.position.y - 0.75, 0.75, 0.75);
+    const spriteSize = this.skinApplied ? 0.93 : 0.75;
+    ctx.drawImage(whiteImg ?? img, this.position.x - spriteSize / 2, this.position.y - spriteSize, spriteSize, spriteSize);
 
     // Draw eyes
     let eyeBaseOffsets = [new Vec2(-0.21, -0.335), new Vec2(0.03, -0.36)];
@@ -430,6 +456,7 @@ export class Player extends Entity {
 
     if (!this.keyListenerRegistered) {
       InputHandler.getInstance().onKey((key, down) => {
+        if (hasOpenNote()) return;
         if (key === "e" && down && !this.dead) this.useSelectedItem();
       });
       this.keyListenerRegistered = true;
