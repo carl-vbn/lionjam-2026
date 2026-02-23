@@ -4,7 +4,7 @@ import { NaturalTile } from "./tiles.js";
 import { dropItems, getItemAction, getItemSprite, ItemId } from "./items.js";
 import { getSelectedSlot, setDeathLocation, setSelectedSlot } from "./ui.js";
 import { smokeSprite, Enemy } from "./enemy.js";
-import { Bonfire, Campfire, Shelter, ShelterShadow } from "./placeables.js";
+import { Bonfire, Campfire, getShelters, Shelter, ShelterShadow } from "./placeables.js";
 import { sounds } from "./sounds.js";
 
 const playerImgs = {
@@ -407,7 +407,16 @@ export class Player extends Entity {
       this.respawnTimer -= _dt;
       if (this.respawnTimer <= 0) {
         this.dead = false;
-        this.position = new Vec2(4, 2);
+        let respawnPos = new Vec2(4, 2);
+        let closestShelterDist = Infinity;
+        for (const shelter of getShelters()) {
+          const d = shelter.position.distanceSquaredTo(this.position);
+          if (d < closestShelterDist) {
+            closestShelterDist = d;
+            respawnPos = shelter.position.add(new Vec2(0, -0.25));
+          }
+        }
+        this.position = respawnPos;
         this.health = 50;
         this.water = 100;
         this.hunger = 100;

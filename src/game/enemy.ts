@@ -1,6 +1,7 @@
 import { attachHint, Entity, HintHandle, InputHandler, ParticleSystem, RenderContext, Vec2, World } from "../engine/index.js";
 import { createOutlinedImage, createWhiteSilhouette, getImage } from "../engine/image.js";
 import { Player } from "./player.js";
+import { getShelters } from "./placeables.js";
 import { dropItems, getWeaponData, getItemSprite, ItemId } from "./items.js";
 import { getSelectedSlot, setSelectedSlot } from "./ui.js";
 import { sounds } from "./sounds.js";
@@ -180,7 +181,8 @@ export class Enemy extends Entity {
         this.hovered = mouseOver && getPlayerWeaponData() !== null;
 
 
-        if (distSq < AGGRO_RANGE_SQ && !player.isDead) {
+        const playerInShelter = getShelters().some(s => s.contains(player.position));
+        if (distSq < AGGRO_RANGE_SQ && !player.isDead && !playerInShelter) {
             // Attack mode
             if (!this.attacking) {
                 this.attacking = true;

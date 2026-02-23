@@ -5,6 +5,9 @@ import { Player } from "./player.js";
 import { registerCompassTarget } from "./ui.js";
 import { sounds } from "./sounds.js";
 
+const builtShelters: Shelter[] = [];
+export function getShelters(): Shelter[] { return builtShelters; }
+
 const txShelter = getImage("assets/entities/shelter/shelter.png");
 const txShelterShadow = getImage("assets/entities/shelter/shadow.png");
 let txShelterOutlined = txShelter;
@@ -310,6 +313,12 @@ export class Shelter extends Entity {
         this.layer = 1;
         this.name = generateName();
         registerCompassTarget(this.name, position);
+        builtShelters.push(this);
+    }
+
+    contains(pos: Vec2): boolean {
+        return pos.x >= this.position.x - 0.5 && pos.x <= this.position.x + 0.5 &&
+               pos.y >= this.position.y - 1 && pos.y <= this.position.y;
     }
 
     update(dt: number): void {
