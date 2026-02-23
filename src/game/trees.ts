@@ -1,7 +1,7 @@
 import { attachHint, Entity, Flipbook, HintHandle, InputHandler, ParticleSource, ParticleSystem, RenderContext, Vec2, World } from "../engine/index.js";
 import { createOutlinedImage, createWhiteSilhouette, getImage } from "../engine/image.js";
 import { dropItems, ItemId } from "./items.js";
-import { openNextNote, releaseNote, tryClaimNote } from "./notes.js";
+import { openNextNote, outpostNote, releaseNote, tryClaimNote } from "./notes.js";
 import { Player } from "./player.js";
 import { getSelectedSlot, setOpenNote } from "./ui.js";
 import { sounds } from "./sounds.js";
@@ -510,6 +510,77 @@ export class Jetwreck extends Entity {
 
     draw(ctx: RenderContext): void {
         ctx.drawImage(txJet, this.position.x - 4, this.position.y - 6, 8, 8);
+    }
+}
+
+const txOutpostGround = getImage("assets/entities/outpost/ground.png");
+const txOutpostBuildings = getImage("assets/entities/outpost/buildings.png");
+const txOutpostNote = getImage("assets/entities/outpost/note.png");
+let txOutpostNoteOutlined: HTMLImageElement = txOutpostNote;
+let txOutpostNoteSelected: HTMLImageElement = txOutpostNote;
+createOutlinedImage(txOutpostNote, 2, "cyan").then((img) => { txOutpostNoteOutlined = img; });
+createOutlinedImage(txOutpostNote, 2, "lime").then((img) => { txOutpostNoteSelected = img; });
+
+export class OutpostGround extends Entity {
+    constructor(position: Vec2) {
+        super(position);
+        this.layer = 0;
+        this.size = new Vec2(6, 3); // Changed width to 6 and height to maintain proportionality
+    }
+
+    draw(ctx: RenderContext): void {
+        ctx.drawImage(txOutpostGround, this.position.x - 3, this.position.y - 4.5, 6, 6);
+    }
+}
+
+export class OutpostBuildings extends Entity {
+    noteHighlighted = false;
+    private noteRead = false;
+    private world: World;
+    private ground: OutpostGround;
+    private onDespawn: () => void;
+
+    constructor(position: Vec2, world: World, ground: OutpostGround, onDespawn: () => void) {
+        super(position);
+        this.layer = 2;
+        this.size = new Vec2(6, 3);
+        this.world = world;
+        this.ground = ground;
+        this.onDespawn = onDespawn;
+    }
+
+    draw(ctx: RenderContext): void {
+        ctx.drawImage(txOutpostBuildings, this.position.x - 3, this.position.y - 4.5, 6, 6);
+
+        const { worldPos: mousePos } = InputHandler.getInstance().getMousePos();
+        const hovered = Math.abs(mousePos.x - this.position.x) < 3 && mousePos.y < this.position.y && mousePos.y > this.position.y - 3;
+
+        ctx.drawImage(this.noteHighlighted ? hovered ? txOutpostNoteSelected : txOutpostNoteOutlined : txOutpostNote, this.position.x - 3, this.position.y - 4.5, 6, 6);
+    }
+
+    update(_dt: number): void {
+        const player = Player.getInstance();
+        const distSq = player.position.distanceSquaredTo(this.position);
+
+        if (!this.noteRead && distSq > 60 * 60) {
+            this.world.removeEntity(this.ground);
+            this.world.removeEntity(this);
+            this.onDespawn();
+            return;
+        }
+
+        this.noteHighlighted = distSq < 9;
+    }
+
+    onClick(_worldPos: Vec2): void {
+        if (this.noteHighlighted) {
+            this.noteRead = true;
+            setOpenNote(outpostNote);
+        }
+    }
+
+    get clickable(): boolean {
+        return this.noteHighlighted;
     }
 }
 

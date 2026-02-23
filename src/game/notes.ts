@@ -17,11 +17,29 @@ export function releaseNote(): void {
     if (notesAssigned > 0) notesAssigned--;
 }
 
+/** Returns how many notes the player has read so far. */
+export function getNotesRead(): number {
+    return nextNoteIndex;
+}
+
 /** Returns the next unread note text, or null if all notes have been read. */
 export function openNextNote(): string | null {
     if (nextNoteIndex >= notes.length) return null;
     return notes[nextNoteIndex++];
 }
+
+export const outpostNote = `Day 1 on the Island
+
+I came to this place on a research trip
+with my team, hoping to discover the
+mysteries of the Bermuda triangle. Though
+our ship crashed and I was, unfortunately,
+the only survivor. I hope that I can get my
+transponder working to signal for help.
+Thankfully, the island appears lush with
+mangoes and coconuts to sustain me. I will
+take the opportunity to study the island
+until help comes.`;
 
 const notes = [
 `Day 12 on the Island

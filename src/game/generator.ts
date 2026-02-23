@@ -4,7 +4,8 @@ import { World } from "../engine/world.js";
 import { Item, ItemId } from "./items.js";
 import { GrassTile, NaturalTile, SandTile, GroundTile, WaterTile } from "./tiles.js";
 import { Enemy } from "./enemy.js";
-import { Boulder, Bush, Jetwreck, MangoTree, PalmTree, Shipwreck, Suitcase, Tallgrass } from "./trees.js";
+import { Boulder, Bush, Jetwreck, MangoTree, OutpostBuildings, OutpostGround, PalmTree, Shipwreck, Suitcase, Tallgrass } from "./trees.js";
+import { getNotesRead } from "./notes.js";
 
 // A reserved tile is one that has not yet been generated, but where no new
 // entity may be spawned when the tile is generated
@@ -12,6 +13,8 @@ let reservedTiles = new Set<string>();
 
 // Keep track of large structures (like shipwrecks and jetwrecks) to avoid spawning entities too close to them
 let largeStructures: Vec2[] = [new Vec2(0, 0)]; // Spawn point counts as a large structure
+
+let outpostSpawned = false;
 
 let drynessSeed = Math.random() * 1000;
 
@@ -124,6 +127,26 @@ export function generateTile(world: World, x: number, y: number): NaturalTile | 
         }
     } else {
         reservedTiles.delete(`${x},${y}`); // Clear the reservation for this tile since it's now generated
+    }
+
+    // Outpost spawning
+    if (!outpostSpawned && getNotesRead() >= 3 && dryness > 0.95 && Math.random() < 0.5) {
+        const spawnLocation = findJetwreckLocation(world, x, y);
+        if (spawnLocation) {
+            outpostSpawned = true;
+            const outpostGround = new OutpostGround(spawnLocation);
+            world.addEntity(outpostGround);
+            world.addEntity(new OutpostBuildings(spawnLocation, world, outpostGround, () => { outpostSpawned = false; }));
+            largeStructures.push(spawnLocation);
+
+            const cx = Math.floor(spawnLocation.x);
+            const cy = Math.floor(spawnLocation.y);
+            for (let tx = cx - 3; tx < cx + 3; tx++) {
+                for (let ty = cy - 3; ty < cy + 3; ty++) {
+                    world.setTile(tx, ty, new GrassTile(world, tx, ty));
+                }
+            }
+        }
     }
 
     // Jetwreck spawning
